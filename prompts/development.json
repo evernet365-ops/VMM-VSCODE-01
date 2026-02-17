@@ -1,0 +1,41 @@
+{
+  "name": "evernet-segmented-development",
+  "version": "1.0.0",
+  "stages": [
+    {
+      "id": "context",
+      "title": "STEP 0 Context",
+      "prompt": "Define goal, scope, risks, and feature flags before any code change."
+    },
+    {
+      "id": "read",
+      "title": "STEP 1 Read",
+      "prompt": "Read AGENTS.md and task-relevant files, then summarize only facts used by this task."
+    },
+    {
+      "id": "plan",
+      "title": "STEP 2 Plan",
+      "prompt": "Break implementation into rollback-safe small steps and include verification command for each step."
+    },
+    {
+      "id": "change",
+      "title": "STEP 3 Change",
+      "prompt": "Apply minimal step-1 change first. Keep no-crash handling and feature flags default OFF."
+    },
+    {
+      "id": "verify",
+      "title": "STEP 4 Verify",
+      "prompt": "Run lint/test and contract or smoke checks when API or runtime behavior changes."
+    },
+    {
+      "id": "rollback",
+      "title": "STEP 5 Rollback",
+      "prompt": "Document exact rollback command and verify feature-off path does not trigger heavy work."
+    },
+    {
+      "id": "observability",
+      "title": "STEP 6 Observability",
+      "prompt": "List metrics/logs/alerts. Include tenant_id and trace_id where applicable."
+    }
+  ]
+}

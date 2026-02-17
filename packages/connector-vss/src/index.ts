@@ -1,17 +1,21 @@
 import Fastify from "fastify";
 import {
   CircuitBreaker,
+  EventDedupGuard,
   addJitter,
+  buildInternalAuthHeaders,
   calculatePollDelayMs,
   closeDbPool,
   createLogger,
   createServiceMetrics,
+  evaluateRollout,
   getDbPool,
   getEnv,
   getNumberEnv,
   loadServiceRuntimeConfig,
   mapHealthToSeverity,
   parseSiteWeights,
+  resolveRolloutScope,
   requestWithRetry,
   type Severity
 } from "@evernet/shared";
@@ -53,6 +57,11 @@ const frameIntervalsMs: number[] = [];
 const healthStateSamples: Array<{ ts: number; state: CameraHealthState }> = [];
 let lastHealthTelemetry: { jitterMs?: number; stabilityScore?: number } = {};
 let lastShardTelemetry: { bucketIndex?: number; activeSiteId?: string; siteSelected?: boolean } = {};
+const eventDedup = new EventDedupGuard({
+  enabled: runtime.enableVmsEventDedup ?? false,
+  windowSec: runtime.eventDedupWindowSec ?? 60,
+  minIntervalSec: runtime.eventSuppressMinIntervalSec ?? 120
+});
 
 const blackframeCapture = new BlackframeCaptureService({
   enabled: runtime.enableVmsBlackframeCapture ?? false,
@@ -61,6 +70,34 @@ const blackframeCapture = new BlackframeCaptureService({
   minIntervalSec: runtime.blackframeCaptureIntervalSec ?? 300,
   timeoutMs: runtime.apiTimeoutMs
 });
+
+function isRolloutEnabled(feature: string, context: { cameraId?: string }, siteIdValue: string): boolean {
+  const scope = resolveRolloutScope(runtime.rolloutScope);
+  const decision = evaluateRollout(
+    feature,
+    {
+      enabled: runtime.enableRolloutGradient ?? false,
+      percent: runtime.rolloutPercent ?? 5,
+      scope
+    },
+    {
+      siteId: siteIdValue,
+      tenantId: siteIdValue,
+      cameraId: context.cameraId
+    }
+  );
+  metrics.rolloutExposureTotal
+    .labels(runtime.serviceName, feature, scope, decision.sampled ? "selected" : "skipped")
+    .inc();
+  logger.info("feature rollout decision", {
+    tenant_id: siteIdValue,
+    feature,
+    scope,
+    sampled: decision.sampled,
+    hash_bucket: decision.hashBucket
+  });
+  return decision.sampled;
+}
 
 type ProviderProbeItem = {
   name: string;
@@ -328,8 +365,9 @@ async function probeWithSharding(nowMs: number): Promise<ProbeExecutionResult> {
     staggerEnabled: runtime.pollStaggerEnabled
   });
   const siteWeights = parseSiteWeights(runtime.siteShardWeights, [siteId]);
+  const siteShardingEnabled = (runtime.enableSiteSharding ?? false) && isRolloutEnabled("site-sharding", {}, siteId);
   const plan = buildPollShardingPlan(cameraIds, nowMs, sharding, {
-    enabled: runtime.enableSiteSharding ?? false,
+    enabled: siteShardingEnabled,
     siteId,
     siteWeights
   });
@@ -340,7 +378,7 @@ async function probeWithSharding(nowMs: number): Promise<ProbeExecutionResult> {
   };
   metrics.pollShardBucketTotal.labels(runtime.serviceName, plan.activeSiteId ?? siteId, String(plan.bucketIndex)).inc();
 
-  if ((runtime.enableSiteSharding ?? false) && !plan.siteSelected) {
+  if (siteShardingEnabled && !plan.siteSelected) {
     logger.info("poll sharding site skipped for current bucket", {
       site_id: siteId,
       bucketIndex: plan.bucketIndex,
@@ -431,19 +469,30 @@ async function writePollState(latencyMs: number): Promise<void> {
 
 async function notifyCritical(detail: string): Promise<void> {
   try {
+    const body = JSON.stringify({
+      siteId,
+      severity: "critical",
+      title: "Connector critical state",
+      message: detail,
+      sourceService: runtime.serviceName,
+      metadata: {
+        loadShedMode,
+        consecutiveFailures
+      }
+    });
+    const authHeaders = buildInternalAuthHeaders({
+      method: "POST",
+      path: "/internal/notify",
+      body,
+      signingKey: runtime.enableInternalAuthz ? runtime.internalSigningKey : undefined
+    });
     await requestWithRetry(`${gatewayUrl}/internal/notify`, {
       method: "POST",
-      body: JSON.stringify({
-        siteId,
-        severity: "critical",
-        title: "Connector critical state",
-        message: detail,
-        sourceService: runtime.serviceName,
-        metadata: {
-          loadShedMode,
-          consecutiveFailures
-        }
-      })
+      body,
+      headers: {
+        "content-type": "application/json",
+        ...authHeaders
+      }
     }, {
       timeoutMs: runtime.apiTimeoutMs,
       retries: runtime.apiRetries,
@@ -534,8 +583,9 @@ async function pollLoop(): Promise<void> {
       offline: !result.success
     };
 
+    const jitterEnabled = (runtime.enableVmsHealthJitter ?? false) && isRolloutEnabled("health-jitter", {}, siteId);
     if (
-      runtime.enableVmsHealthJitter &&
+      jitterEnabled &&
       healthSample.lastFrameTsMs !== undefined &&
       healthSample.lastFrameTsMs !== null
     ) {
@@ -557,7 +607,7 @@ async function pollLoop(): Promise<void> {
     }
 
     const health = evaluateHealth(currentHealthState, healthSample, {
-      enableJitter: runtime.enableVmsHealthJitter ?? false,
+      enableJitter: jitterEnabled,
       frameIntervalsMs,
       recentStates: healthStateSamples.map((item) => item.state),
       stabilityThreshold: 0.9
@@ -568,7 +618,7 @@ async function pollLoop(): Promise<void> {
     metrics.cameraFps.labels(...labels).set(healthSample.fps ?? 0);
     metrics.cameraDropFrames.labels(...labels).set(healthSample.dropFrames ?? 0);
     metrics.cameraLastFrameTs.labels(...labels).set(healthSample.lastFrameTsMs ?? 0);
-    if (runtime.enableVmsHealthJitter) {
+    if (jitterEnabled) {
       const jitterMs = health.jitterMs ?? 0;
       const stabilityScore = health.stabilityScore ?? 0;
       lastHealthTelemetry = { jitterMs, stabilityScore };
@@ -577,7 +627,21 @@ async function pollLoop(): Promise<void> {
     }
 
     if (health.changed) {
-      currentHealthState = health.state;
+      const eventState = health.state;
+      const dedupKey = `${siteId}:aggregate:${eventState}:${health.reason}`;
+      const dedup = eventDedup.check(dedupKey, nowMs);
+      metrics.eventDedupTotal.labels(runtime.serviceName, siteId, dedup.allow ? "pass" : "suppress").inc();
+      if (!dedup.allow) {
+        metrics.eventSuppressTotal.labels(runtime.serviceName, siteId, dedup.reason).inc();
+      }
+      currentHealthState = eventState;
+      if (!dedup.allow) {
+        logger.info("health event suppressed by dedup", {
+          tenant_id: siteId,
+          dedupKey,
+          reason: dedup.reason
+        });
+      } else {
       const severityFromHealth = mapHealthToSeverity(health.state);
       queue.push({ ts: new Date().toISOString(), severity: severityFromHealth, detail: `health ${health.state} (${health.reason})` });
       while (queue.length > maxQueue) {
@@ -585,7 +649,8 @@ async function pollLoop(): Promise<void> {
       }
       logger.info("camera health state changed", { state: health.state, reason: health.reason });
 
-      if (runtime.enableVmsBlackframeCapture && health.state === "BLACKFRAME") {
+      const blackframeEnabled = (runtime.enableVmsBlackframeCapture ?? false) && isRolloutEnabled("blackframe-capture", {}, siteId);
+      if (blackframeEnabled && health.state === "BLACKFRAME") {
         const cameraId = `${siteId}-aggregate`;
         const captureResult = await blackframeCapture.capture({
           serviceName: runtime.serviceName,
@@ -607,6 +672,7 @@ async function pollLoop(): Promise<void> {
             reason: captureResult.reason
           });
         }
+      }
       }
     }
   }

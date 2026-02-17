@@ -5,6 +5,7 @@ import {
   closeDbPool,
   createLogger,
   createServiceMetrics,
+  enforceInternalAuth,
   getDbPool,
   getEnv,
   loadServiceRuntimeConfig,
@@ -54,8 +55,28 @@ app.addHook("onResponse", async (request, reply) => {
   metrics.dbConnections.labels(runtime.serviceName).set((db as unknown as { totalCount?: number }).totalCount ?? 0);
 });
 
-app.addHook("onRequest", async (request) => {
+app.addHook("onRequest", async (request, reply) => {
   (request as { receivedAtMs?: number }).receivedAtMs = Date.now();
+  const ok = await enforceInternalAuth(
+    request,
+    reply,
+    logger,
+    metrics,
+    {
+      enabled: runtime.enableInternalAuthz ?? false,
+      signingKey: runtime.internalSigningKey,
+      rateLimitPerMin: runtime.internalRateLimitPerMin ?? 300,
+      serviceName: runtime.serviceName,
+      scopeTag: "internal",
+      shouldProtect: (req) => req.url.startsWith("/internal/")
+    },
+    {
+      traceId: String(request.headers["x-trace-id"] ?? "")
+    }
+  );
+  if (!ok) {
+    return reply;
+  }
 });
 
 app.get("/healthz", async () => {

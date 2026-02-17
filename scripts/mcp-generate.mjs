@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import { createHash } from "node:crypto";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const SERVICE_PORT_MAP = {
   NOTIFICATION_GATEWAY_PORT: { name: "notification-gateway", owners: ["team-ops"] },
@@ -133,6 +134,57 @@ async function generateRunbooks(scriptsDir) {
   };
 }
 
+async function generatePrompts(promptsDir) {
+  let entries = [];
+  try {
+    entries = (await fs.readdir(promptsDir))
+      .filter((file) => file.endsWith(".json"))
+      .sort();
+  } catch {
+    entries = [];
+  }
+
+  const prompts = [];
+  for (const file of entries) {
+    const fullPath = path.join(promptsDir, file);
+    const content = JSON.parse(await fs.readFile(fullPath, "utf8"));
+    prompts.push({
+      name: file.replace(/\.json$/i, ""),
+      path: path.posix.join("prompts", file),
+      stages: Array.isArray(content.stages) ? content.stages.length : 0
+    });
+  }
+
+  return {
+    version: VERSION,
+    generatedAt: entries.length > 0 ? await maxMtime(entries.map((file) => path.join(promptsDir, file))) : new Date(0).toISOString(),
+    prompts
+  };
+}
+
+async function generateOpsDiag(scriptsDir) {
+  const files = ["diag-collect.mjs", "smoke-aggregate.mjs"];
+  const resources = [];
+  for (const file of files) {
+    const fullPath = path.join(scriptsDir, file);
+    try {
+      await fs.stat(fullPath);
+      resources.push({
+        name: file.replace(/\.mjs$/i, ""),
+        path: path.posix.join("scripts", file)
+      });
+    } catch {
+      // Skip missing optional diag script.
+    }
+  }
+
+  return {
+    version: VERSION,
+    generatedAt: resources.length > 0 ? await maxMtime(resources.map((item) => path.join(scriptsDir, `${item.name}.mjs`))) : new Date(0).toISOString(),
+    resources
+  };
+}
+
 function toJsonContent(obj) {
   return `${JSON.stringify(obj, null, 2)}\n`;
 }
@@ -142,18 +194,22 @@ function hashContent(content) {
 }
 
 export async function generate({ write = true } = {}) {
-  const [services, dbSchema, apiIndex, runbooks] = await Promise.all([
+  const [services, dbSchema, apiIndex, runbooks, prompts, opsDiag] = await Promise.all([
     generateServices(".env.example"),
     generateDbSchema(path.join("db", "migrations")),
     generateApiIndex("openapi"),
-    generateRunbooks("scripts")
+    generateRunbooks("scripts"),
+    generatePrompts("prompts"),
+    generateOpsDiag("scripts")
   ]);
 
   const files = {
     "mcp/repo-services.json": toJsonContent(services),
     "mcp/db-schema.json": toJsonContent(dbSchema),
     "mcp/api-index.json": toJsonContent(apiIndex),
-    "mcp/ops-runbooks.json": toJsonContent(runbooks)
+    "mcp/ops-runbooks.json": toJsonContent(runbooks),
+    "mcp/prompts.json": toJsonContent(prompts),
+    "mcp/ops-diag.json": toJsonContent(opsDiag)
   };
 
   const hashes = Object.fromEntries(Object.entries(files).map(([file, content]) => [file, hashContent(content)]));
@@ -174,7 +230,8 @@ async function main() {
   await generate({ write: true });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const entryUrl = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : "";
+if (import.meta.url === entryUrl) {
   main().catch((error) => {
     console.error(error);
     process.exit(1);

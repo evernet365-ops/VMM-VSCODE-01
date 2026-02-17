@@ -6,7 +6,9 @@ const FILES = [
   { path: "mcp/repo-services.json", requiredKeys: ["services"] },
   { path: "mcp/db-schema.json", requiredKeys: ["migrations", "schemas"] },
   { path: "mcp/api-index.json", requiredKeys: ["openapi"] },
-  { path: "mcp/ops-runbooks.json", requiredKeys: ["runbooks"] }
+  { path: "mcp/ops-runbooks.json", requiredKeys: ["runbooks"] },
+  { path: "mcp/prompts.json", requiredKeys: ["prompts"] },
+  { path: "mcp/ops-diag.json", requiredKeys: ["resources"] }
 ];
 
 function hash(content) {
@@ -97,6 +99,22 @@ function validateSemantics() {
   for (const item of runbooks.runbooks) {
     if (!item?.path || !existsSync(item.path)) {
       throw new Error(`ops-runbooks: script not found (${item?.path ?? "unknown"})`);
+    }
+  }
+
+  const prompts = JSON.parse(readFileSync("mcp/prompts.json", "utf8"));
+  ensureArray(prompts.prompts, "mcp/prompts.json.prompts");
+  for (const item of prompts.prompts) {
+    if (!item?.path || !existsSync(item.path)) {
+      throw new Error(`prompts: prompt file not found (${item?.path ?? "unknown"})`);
+    }
+  }
+
+  const opsDiag = JSON.parse(readFileSync("mcp/ops-diag.json", "utf8"));
+  ensureArray(opsDiag.resources, "mcp/ops-diag.json.resources");
+  for (const item of opsDiag.resources) {
+    if (!item?.path || !existsSync(item.path)) {
+      throw new Error(`ops-diag: diag script not found (${item?.path ?? "unknown"})`);
     }
   }
 }

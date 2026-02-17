@@ -33,6 +33,12 @@ export interface ServiceMetrics {
   playbackCacheEvictTotal: Counter<string>;
   playbackCacheTtlExpiredTotal: Counter<string>;
   pollShardBucketTotal: Counter<string>;
+  rolloutExposureTotal: Counter<string>;
+  eventDedupTotal: Counter<string>;
+  eventSuppressTotal: Counter<string>;
+  internalAuthFailTotal: Counter<string>;
+  internalRateLimitedTotal: Counter<string>;
+  dashboardPageViewsTotal: Counter<string>;
   managementReportRequestsTotal: Counter<string>;
   managementReportSlowQueryTotal: Counter<string>;
   aiEventsTotal: Counter<string>;
@@ -224,6 +230,48 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     registers: [registry]
   });
 
+  const rolloutExposureTotal = new Counter({
+    name: "vmm_rollout_exposure_total",
+    help: "Feature rollout exposure by outcome",
+    labelNames: ["service", "feature", "scope", "outcome"],
+    registers: [registry]
+  });
+
+  const eventDedupTotal = new Counter({
+    name: "vmm_event_dedup_total",
+    help: "Event dedup pass/suppress decisions",
+    labelNames: ["service", "site_id", "outcome"],
+    registers: [registry]
+  });
+
+  const eventSuppressTotal = new Counter({
+    name: "vmm_event_suppress_total",
+    help: "Suppressed event count by reason",
+    labelNames: ["service", "site_id", "reason"],
+    registers: [registry]
+  });
+
+  const internalAuthFailTotal = new Counter({
+    name: "vmm_internal_auth_fail_total",
+    help: "Internal API signature/auth failures",
+    labelNames: ["service", "scope", "reason"],
+    registers: [registry]
+  });
+
+  const internalRateLimitedTotal = new Counter({
+    name: "vmm_internal_rate_limited_total",
+    help: "Internal API requests blocked by rate limit",
+    labelNames: ["service", "scope"],
+    registers: [registry]
+  });
+
+  const dashboardPageViewsTotal = new Counter({
+    name: "vmm_dashboard_page_views_total",
+    help: "Dashboard page views by site and UI version",
+    labelNames: ["service", "site_id", "ui_version"],
+    registers: [registry]
+  });
+
   const managementReportRequestsTotal = new Counter({
     name: "vmm_management_report_requests_total",
     help: "Total management report requests",
@@ -303,6 +351,12 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     playbackCacheEvictTotal,
     playbackCacheTtlExpiredTotal,
     pollShardBucketTotal,
+    rolloutExposureTotal,
+    eventDedupTotal,
+    eventSuppressTotal,
+    internalAuthFailTotal,
+    internalRateLimitedTotal,
+    dashboardPageViewsTotal,
     managementReportRequestsTotal,
     managementReportSlowQueryTotal,
     aiEventsTotal,

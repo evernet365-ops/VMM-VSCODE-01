@@ -25,13 +25,14 @@ Later files override earlier values.
 
 1. Keep new feature flags `false` in `.env.example`.
 2. Enable only required flags in `deploy/env/connector-vss.prod.env`.
-3. Replace placeholder secrets before deployment:
+3. Optional UI rollout: set `FEATURE_WEB_DASHBOARD_UX_V2=true` in dashboard runtime env.
+4. Replace placeholder secrets before deployment:
    - `SAMPO_PASSWORD`
-4. Run:
+5. Run:
    - `corepack pnpm run deploy:env:check`
    - `docker compose config`
    - `corepack pnpm --filter @evernet/connector-vss run test`
-5. Deploy and verify:
+6. Deploy and verify:
    - `http://<connector-vss-host>:3013/healthz`
    - `http://<connector-vss-host>:3013/metrics`
    - `corepack pnpm run smoke:connector`
@@ -57,3 +58,21 @@ Later files override earlier values.
 - Immediate rollback: set feature flags to `false` in `deploy/env/connector-vss.prod.env` and redeploy.
 - Full rollback: remove `deploy/env/connector-vss.prod.env` from `connector-vss.env_file` in `docker-compose.yml` and redeploy.
 - NTP rollback: set `FEATURE_VMM_NTP_TIME_SYNC=false` and `NTP_SERVER_ENABLED=false` in `deploy/env/scheduler.prod.env`, then redeploy scheduler.
+
+## Internal auth + rollout gradient
+
+1. Keep defaults OFF:
+   - `FEATURE_INTERNAL_AUTHZ=false`
+   - `FEATURE_ROLLOUT_GRADIENT=false`
+2. For staged rollout:
+   - `FEATURE_ROLLOUT_GRADIENT=true`
+   - `ROLLOUT_PERCENT=5`
+   - `ROLLOUT_SCOPE=site`
+3. For internal API protection:
+   - `FEATURE_INTERNAL_AUTHZ=true`
+   - `INTERNAL_SIGNING_KEY=<rotate-secret>`
+   - `INTERNAL_RATE_LIMIT_PER_MIN=300`
+4. Verify metrics:
+   - `vmm_rollout_exposure_total`
+   - `vmm_internal_auth_fail_total`
+   - `vmm_internal_rate_limited_total`

@@ -3,8 +3,11 @@ import {
   closeDbPool,
   createLogger,
   createServiceMetrics,
+  enforceInternalAuth,
+  evaluateRollout,
   getDbPool,
-  loadServiceRuntimeConfig
+  loadServiceRuntimeConfig,
+  resolveRolloutScope
 } from "@evernet/shared";
 import { playbackWithFallback, type PlaybackQuery } from "./playback.js";
 import {
@@ -32,8 +35,31 @@ function toInterval(window: string): string {
   return `${Number(window.slice(0, -1))} hours`;
 }
 
-app.addHook("onRequest", async (request) => {
+app.addHook("onRequest", async (request, reply) => {
   (request as { startedAt?: number }).startedAt = Date.now();
+  const params = (request.params ?? {}) as { siteId?: string };
+  const protectedRoute = request.url.includes("/reports/management/");
+  const ok = await enforceInternalAuth(
+    request,
+    reply,
+    logger,
+    metrics,
+    {
+      enabled: runtime.enableInternalAuthz ?? false,
+      signingKey: runtime.internalSigningKey,
+      rateLimitPerMin: runtime.internalRateLimitPerMin ?? 300,
+      serviceName: runtime.serviceName,
+      scopeTag: "management",
+      shouldProtect: () => protectedRoute
+    },
+    {
+      tenantId: params.siteId,
+      traceId: String(request.headers["x-trace-id"] ?? "")
+    }
+  );
+  if (!ok) {
+    return reply;
+  }
 });
 
 app.addHook("onResponse", async (request, reply) => {
@@ -169,6 +195,39 @@ app.get("/api/v1/sites/:siteId/playback", async (request, reply) => {
   };
 
   const enableFallback = runtime.enablePlaybackFallbackScan ?? false;
+  const rolloutScope = resolveRolloutScope(runtime.rolloutScope);
+  const tunableRollout = evaluateRollout(
+    "playback-tunable",
+    {
+      enabled: runtime.enableRolloutGradient ?? false,
+      percent: runtime.rolloutPercent ?? 5,
+      scope: rolloutScope
+    },
+    {
+      siteId: params.siteId,
+      tenantId: params.siteId,
+      cameraId
+    }
+  );
+  metrics.rolloutExposureTotal
+    .labels(runtime.serviceName, "playback-tunable", rolloutScope, tunableRollout.sampled ? "selected" : "skipped")
+    .inc();
+  const cacheRollout = evaluateRollout(
+    "playback-cache",
+    {
+      enabled: runtime.enableRolloutGradient ?? false,
+      percent: runtime.rolloutPercent ?? 5,
+      scope: rolloutScope
+    },
+    {
+      siteId: params.siteId,
+      tenantId: params.siteId,
+      cameraId
+    }
+  );
+  metrics.rolloutExposureTotal
+    .labels(runtime.serviceName, "playback-cache", rolloutScope, cacheRollout.sampled ? "selected" : "skipped")
+    .inc();
 
   try {
     const result = await playbackWithFallback(
@@ -178,12 +237,12 @@ app.get("/api/v1/sites/:siteId/playback", async (request, reply) => {
       playbackQuery,
       enableFallback,
       {
-        enableTunable: runtime.enablePlaybackFallbackTunable ?? false,
+        enableTunable: (runtime.enablePlaybackFallbackTunable ?? false) && tunableRollout.sampled,
         fallbackWindowSec: runtime.playbackFallbackWindowSec ?? 3600,
         fallbackMaxPages: runtime.playbackFallbackMaxPages ?? 5,
         slowMs: runtime.playbackSlowMs ?? 800,
         slowAlertThreshold: runtime.playbackSlowAlertThreshold ?? 10,
-        enableCache: runtime.enablePlaybackCache ?? false,
+        enableCache: (runtime.enablePlaybackCache ?? false) && cacheRollout.sampled,
         cacheTtlMs: runtime.playbackCacheTtlMs ?? 300000,
         cacheMaxEntries: runtime.playbackCacheMaxEntries ?? 1000,
         cacheHotWindows: String(runtime.playbackCacheHotWindows ?? "15m,1h")

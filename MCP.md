@@ -24,6 +24,8 @@ This project can consume MCP resources to provide controlled context for coding 
 - `db://schema/current`: canonical schema hash and migration list
 - `api://openapi/index`: available OpenAPI specs and versions
 - `ops://runbooks`: runbook index and drill scripts
+- `prompt://development`: staged development prompts for AGENTS workflow
+- `ops://diag`: diagnostic scripts and output contract
 
 ## Update Process
 
@@ -31,3 +33,11 @@ This project can consume MCP resources to provide controlled context for coding 
 2. Regenerate MCP resource payloads: `pnpm mcp:update`
 3. Validate against schema.
 4. Publish new version with changelog entry.
+
+Current generated files:
+- `mcp/repo-services.json`
+- `mcp/db-schema.json`
+- `mcp/api-index.json`
+- `mcp/ops-runbooks.json`
+- `mcp/prompts.json`
+- `mcp/ops-diag.json`

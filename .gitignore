@@ -20,4 +20,5 @@ bin-release/
 *.ipa
 *.apk
 artifacts/
+diag/
 *.log

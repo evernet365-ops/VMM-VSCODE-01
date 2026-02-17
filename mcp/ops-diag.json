@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-17T08:14:15.599Z",
+  "resources": [
+    {
+      "name": "diag-collect",
+      "path": "scripts/diag-collect.mjs"
+    },
+    {
+      "name": "smoke-aggregate",
+      "path": "scripts/smoke-aggregate.mjs"
+    }
+  ]
+}

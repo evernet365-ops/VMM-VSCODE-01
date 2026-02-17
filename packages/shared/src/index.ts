@@ -6,3 +6,6 @@ export * from "./metrics.js";
 export * from "./http.js";
 export * from "./polling.js";
 export * from "./health.js";
+export * from "./rollout.js";
+export * from "./event-dedup.js";
+export * from "./internal-auth.js";

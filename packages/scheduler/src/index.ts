@@ -1,5 +1,8 @@
 import Fastify from "fastify";
 import {
+  buildInternalAuthHeaders,
+  enforceInternalAuth,
+  evaluateRollout,
   createLogger,
   createServiceMetrics,
   getEnv,
@@ -7,6 +10,7 @@ import {
   loadServiceRuntimeConfig,
   normalizeBucketCount,
   parseSiteWeights,
+  resolveRolloutScope,
   requestWithRetry
 } from "@evernet/shared";
 import { selectSiteForBucket } from "@evernet/shared";
@@ -47,7 +51,21 @@ async function runCycle(): Promise<void> {
   const cycleStart = Date.now();
   try {
     let cycleSites = sites;
-    if (runtime.enableSiteSharding) {
+    const shardScope = resolveRolloutScope(runtime.rolloutScope);
+    const shardRollout = evaluateRollout(
+      "site-sharding",
+      {
+        enabled: runtime.enableRolloutGradient ?? false,
+        percent: runtime.rolloutPercent ?? 5,
+        scope: shardScope
+      },
+      { siteId, tenantId: siteId }
+    );
+    metrics.rolloutExposureTotal
+      .labels(runtime.serviceName, "site-sharding", shardScope, shardRollout.sampled ? "selected" : "skipped")
+      .inc();
+
+    if (runtime.enableSiteSharding && shardRollout.sampled) {
       const bucketCount = normalizeBucketCount(runtime.siteShardBuckets ?? 60, 60);
       const bucketIndex = Math.floor(Date.now() / 1000) % bucketCount;
       const normalized = parseSiteWeights(runtime.siteShardWeights, sites)
@@ -79,15 +97,26 @@ async function runCycle(): Promise<void> {
 
       const payload = await response.json() as { count: number };
       if (payload.count >= 10) {
+        const notifyBody = JSON.stringify({
+          siteId,
+          severity: "critical",
+          title: "Scheduler anomaly alert",
+          message: `15m anomalies reached ${payload.count}`,
+          sourceService: runtime.serviceName
+        });
+        const authHeaders = buildInternalAuthHeaders({
+          method: "POST",
+          path: "/internal/notify",
+          body: notifyBody,
+          signingKey: runtime.enableInternalAuthz ? runtime.internalSigningKey : undefined
+        });
         await requestWithRetry(`${gatewayUrl}/internal/notify`, {
           method: "POST",
-          body: JSON.stringify({
-            siteId,
-            severity: "critical",
-            title: "Scheduler anomaly alert",
-            message: `15m anomalies reached ${payload.count}`,
-            sourceService: runtime.serviceName
-          })
+          body: notifyBody,
+          headers: {
+            "content-type": "application/json",
+            ...authHeaders
+          }
         }, {
           timeoutMs: runtime.apiTimeoutMs,
           retries: runtime.apiRetries,
@@ -114,8 +143,29 @@ async function runCycle(): Promise<void> {
   }
 }
 
-app.addHook("onRequest", async (request) => {
+app.addHook("onRequest", async (request, reply) => {
   (request as { startedAt?: number }).startedAt = Date.now();
+  const ok = await enforceInternalAuth(
+    request,
+    reply,
+    logger,
+    metrics,
+    {
+      enabled: runtime.enableInternalAuthz ?? false,
+      signingKey: runtime.internalSigningKey,
+      rateLimitPerMin: runtime.internalRateLimitPerMin ?? 300,
+      serviceName: runtime.serviceName,
+      scopeTag: "internal",
+      shouldProtect: (req) => req.url.startsWith("/internal/")
+    },
+    {
+      tenantId: siteId,
+      traceId: String(request.headers["x-trace-id"] ?? "")
+    }
+  );
+  if (!ok) {
+    return reply;
+  }
 });
 
 app.addHook("onResponse", async (request, reply) => {

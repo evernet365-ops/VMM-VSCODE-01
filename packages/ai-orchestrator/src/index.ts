@@ -1,8 +1,10 @@
 import Fastify from "fastify";
 import {
+  buildInternalAuthHeaders,
   closeDbPool,
   createLogger,
   createServiceMetrics,
+  enforceInternalAuth,
   getDbPool,
   getEnv,
   loadServiceRuntimeConfig,
@@ -20,8 +22,28 @@ const gatewayUrl = getEnv("NOTIFICATION_GATEWAY_URL", "http://localhost:3010");
 
 const app = Fastify({ logger: false });
 
-app.addHook("onRequest", async (request) => {
+app.addHook("onRequest", async (request, reply) => {
   (request as { startedAt?: number }).startedAt = Date.now();
+  const ok = await enforceInternalAuth(
+    request,
+    reply,
+    logger,
+    metrics,
+    {
+      enabled: runtime.enableInternalAuthz ?? false,
+      signingKey: runtime.internalSigningKey,
+      rateLimitPerMin: runtime.internalRateLimitPerMin ?? 300,
+      serviceName: runtime.serviceName,
+      scopeTag: "internal",
+      shouldProtect: (req) => req.url.startsWith("/internal/")
+    },
+    {
+      traceId: String(request.headers["x-trace-id"] ?? "")
+    }
+  );
+  if (!ok) {
+    return reply;
+  }
 });
 
 app.addHook("onResponse", async (request, reply) => {
@@ -57,10 +79,21 @@ async function notifyGateway(event: AiEvent): Promise<void> {
       tsEvent: event.tsEvent
     }
   };
+  const body = JSON.stringify(payload);
+  const authHeaders = buildInternalAuthHeaders({
+    method: "POST",
+    path: "/internal/notify",
+    body,
+    signingKey: runtime.enableInternalAuthz ? runtime.internalSigningKey : undefined
+  });
 
   await requestWithRetry(`${gatewayUrl}/internal/notify`, {
     method: "POST",
-    body: JSON.stringify(payload)
+    body,
+    headers: {
+      "content-type": "application/json",
+      ...authHeaders
+    }
   }, {
     timeoutMs: runtime.apiTimeoutMs,
     retries: runtime.apiRetries,

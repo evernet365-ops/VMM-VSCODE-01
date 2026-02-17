@@ -64,6 +64,10 @@ export interface ServiceRuntimeConfig {
   enablePlaybackCache?: boolean;
   enableSiteSharding?: boolean;
   enableMcpAutogenPrompts?: boolean;
+  enableRolloutGradient?: boolean;
+  enableVmsEventDedup?: boolean;
+  enableInternalAuthz?: boolean;
+  enableWebDashboardUxV2?: boolean;
   ntpServerEnabled?: boolean;
   ntpServerHost?: string;
   ntpServerPort?: number;
@@ -88,6 +92,13 @@ export interface ServiceRuntimeConfig {
   siteShardBuckets?: number;
   mcpAutogenEnabled?: boolean;
   mcpAutogenSources?: string;
+  rolloutPercent?: number;
+  rolloutScope?: string;
+  rolloutStickyKey?: string;
+  eventDedupWindowSec?: number;
+  eventSuppressMinIntervalSec?: number;
+  internalSigningKey?: string;
+  internalRateLimitPerMin?: number;
   vivotekNvrBaseUrl?: string;
   vivotekIpcamBaseUrl?: string;
   vivotekUsername?: string;
@@ -179,6 +190,10 @@ export function loadServiceRuntimeConfig(serviceName: string, defaultPort: numbe
     enablePlaybackCache: getBooleanEnv("FEATURE_VMM_PLAYBACK_CACHE", false),
     enableSiteSharding: getBooleanEnv("FEATURE_VMM_SITE_SHARDING", false),
     enableMcpAutogenPrompts: getBooleanEnv("FEATURE_MCP_AUTOGEN_PROMPTS", false),
+    enableRolloutGradient: getBooleanEnv("FEATURE_ROLLOUT_GRADIENT", false),
+    enableVmsEventDedup: getBooleanEnv("FEATURE_VMS_EVENT_DEDUP", false),
+    enableInternalAuthz: getBooleanEnv("FEATURE_INTERNAL_AUTHZ", false),
+    enableWebDashboardUxV2: getBooleanEnv("FEATURE_WEB_DASHBOARD_UX_V2", false),
     ntpServerEnabled: getBooleanEnv("NTP_SERVER_ENABLED", false),
     ntpServerHost: getOptionalEnv("NTP_SERVER_HOST") ?? "0.0.0.0",
     ntpServerPort: getNumberEnv("NTP_SERVER_PORT", 123),
@@ -203,6 +218,13 @@ export function loadServiceRuntimeConfig(serviceName: string, defaultPort: numbe
     siteShardBuckets: getNumberEnv("SITE_SHARD_BUCKETS", 60),
     mcpAutogenEnabled: getBooleanEnv("MCP_AUTOGEN_ENABLED", false),
     mcpAutogenSources: getOptionalEnv("MCP_AUTOGEN_SOURCES") ?? "services,openapi,runbooks",
+    rolloutPercent: getNumberEnv("ROLLOUT_PERCENT", 5),
+    rolloutScope: getOptionalEnv("ROLLOUT_SCOPE") ?? "site",
+    rolloutStickyKey: getOptionalEnv("ROLLOUT_STICKY_KEY") ?? "site_id",
+    eventDedupWindowSec: getNumberEnv("EVENT_DEDUP_WINDOW_SEC", 60),
+    eventSuppressMinIntervalSec: getNumberEnv("EVENT_SUPPRESS_MIN_INTERVAL_SEC", 120),
+    internalSigningKey: getOptionalEnv("INTERNAL_SIGNING_KEY"),
+    internalRateLimitPerMin: getNumberEnv("INTERNAL_RATE_LIMIT_PER_MIN", 300),
     vivotekNvrBaseUrl: getOptionalEnv("VIVOTEK_NVR_BASE_URL"),
     vivotekIpcamBaseUrl: getOptionalEnv("VIVOTEK_IPCAM_BASE_URL"),
     vivotekUsername: getOptionalEnv("VIVOTEK_USERNAME"),

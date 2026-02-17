@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "node -e \"console.log('lint:ok @evernet/web-dashboard')\"",
-    "test": "node -e \"console.log('test:ok @evernet/web-dashboard')\""
+    "test": "tsx --test src/ui-version.test.ts"
   },
   "dependencies": {
     "@evernet/shared": "workspace:*",

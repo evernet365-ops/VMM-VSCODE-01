@@ -8,6 +8,7 @@ import {
   getDbPool,
   loadServiceRuntimeConfig
 } from "@evernet/shared";
+import { resolveDashboardUiVersion } from "./ui-version.js";
 
 const runtime = loadServiceRuntimeConfig("web-dashboard", Number(process.env.WEB_DASHBOARD_PORT ?? 3016));
 const logger = createLogger(runtime.serviceName);
@@ -234,6 +235,7 @@ function renderDashboardPage(args: {
   channelQuality: ChannelQualityRecord[];
   pollState: PollStateRecord | null;
   breaker: BreakerRecord | null;
+  enhancedUx: boolean;
 }): string {
   const siteTabs = args.sites
     .map((site) => {
@@ -279,6 +281,341 @@ function renderDashboardPage(args: {
   const pollSeverity = args.pollState?.severity ?? "normal";
   const breakerState = args.breaker?.state ?? "closed";
   const nextPoll = args.pollState?.next_poll_at ? formatTimestamp(args.pollState.next_poll_at) : "n/a";
+  const detailHref = `/api/v1/sites/${encodeURIComponent(args.siteId)}/dashboard/summary`;
+
+  if (args.enhancedUx) {
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EverNet VMM Ops Console</title>
+  <link rel="stylesheet" href="/assets/tokens/design-tokens.css" />
+  <style>
+    :root {
+      --bg-a: #f4f8fb;
+      --bg-b: #edf5ea;
+      --ink: #14202b;
+      --muted: #5c6f7f;
+      --panel: #ffffff;
+      --line: #d4e0e8;
+      --accent: #0b6b8b;
+      --accent-soft: #d7edf4;
+      --good: #14854f;
+      --warn: #bf6b00;
+      --danger: #b8342a;
+      --radius: 14px;
+      --shadow: 0 14px 28px rgba(17, 37, 49, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; }
+    body {
+      color: var(--ink);
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(1200px 600px at -10% -20%, #d2e7fb, transparent 50%),
+        radial-gradient(1000px 500px at 110% -10%, #dff0df, transparent 45%),
+        linear-gradient(160deg, var(--bg-a), var(--bg-b));
+    }
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .headline {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      margin-bottom: 14px;
+      align-items: end;
+    }
+    .headline h1 {
+      margin: 0;
+      font-size: 1.7rem;
+      letter-spacing: 0.01em;
+    }
+    .headline p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .btn, .site-tab {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      text-decoration: none;
+      color: var(--ink);
+      background: #fff;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: #0e5f77;
+      color: #fff;
+      border-color: #0e5f77;
+    }
+    .site-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .site-tab.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent-soft);
+    }
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+    .chip .k {
+      display: block;
+      font-size: .74rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+    .chip strong {
+      font-size: 1.38rem;
+      line-height: 1.1;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, .95fr);
+      gap: 12px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 12px;
+      animation: floatIn .35s ease;
+    }
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+    .tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #f8fcff;
+    }
+    .pill {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 700;
+    }
+    .pill.normal { background: #e4f5eb; color: var(--good); }
+    .pill.suspect { background: #fff0d8; color: var(--warn); }
+    .pill.critical { background: #fde4e1; color: var(--danger); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      padding: 8px 6px;
+      vertical-align: middle;
+    }
+    th {
+      font-size: .74rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+    }
+    tr:last-child td { border-bottom: 0; }
+    .rank-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+    .rank-list li {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 9px;
+      background: #fcfdff;
+    }
+    .rank {
+      font-size: .74rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .channel-row { margin-bottom: 9px; }
+    .channel-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: .86rem;
+    }
+    .channel-meta small { color: var(--muted); }
+    .meter {
+      border: 1px solid var(--line);
+      background: #edf3f8;
+      border-radius: 999px;
+      overflow: hidden;
+      height: 10px;
+    }
+    .meter span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #0f8a58, #17ad6f);
+    }
+    .footer-links {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .empty { color: var(--muted); }
+    @media (max-width: 1120px) {
+      .status-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .headline { grid-template-columns: 1fr; }
+      .actions { justify-content: flex-start; }
+      .status-strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="headline">
+      <div>
+        <h1>EverNet Site Operations Console</h1>
+        <p>Site ${escapeHtml(args.siteId)} · Flow: Detect -> Analyze -> Notify -> Recover</p>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="refresh-now">Refresh Now</button>
+        <button class="btn primary" type="button" id="toggle-auto">Auto Refresh: ON</button>
+      </div>
+    </header>
+
+    <nav class="site-tabs" aria-label="Site switch tabs">${siteTabs}</nav>
+
+    <section class="status-strip" aria-label="Key KPIs">
+      <article class="chip"><span class="k">Offline Cameras</span><strong>${args.summary.offlineCameras}</strong></article>
+      <article class="chip"><span class="k">AI Events 1H</span><strong>${args.summary.aiEvents1h}</strong></article>
+      <article class="chip"><span class="k">Notify Success</span><strong>${formatPercent(args.summary.notificationSuccessRate1h)}</strong></article>
+      <article class="chip"><span class="k">Circuit Breaker</span><strong>${escapeHtml(breakerState)}</strong></article>
+    </section>
+
+    <section class="layout">
+      <section>
+        <article class="panel">
+          <h2>Operations Workflow</h2>
+          <div class="meta-row">
+            <span class="tag">Polling: <span class="pill ${escapeHtml(pollSeverity)}">${escapeHtml(pollSeverity)}</span></span>
+            <span class="tag">AI: ${runtime.enableAI ? "enabled" : "disabled"}</span>
+            <span class="tag">Next poll: ${escapeHtml(nextPoll)}</span>
+            <span class="tag">Load shed: ${args.pollState?.load_shed_mode ? "on" : "off"}</span>
+            <span class="tag">Failures: ${args.pollState?.consecutive_failures ?? 0}</span>
+            <span class="tag">Latency ms: ${args.breaker?.last_latency_ms ?? 0}</span>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Recent Incidents</h2>
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>Camera</th><th>Event</th><th>Severity</th><th>Score</th></tr>
+            </thead>
+            <tbody>${incidentRows}</tbody>
+          </table>
+        </article>
+      </section>
+
+      <aside>
+        <article class="panel">
+          <h2>Top Offline (24h)</h2>
+          <ul class="rank-list">${topOfflineRows}</ul>
+        </article>
+
+        <article class="panel">
+          <h2>Channel Quality (1h)</h2>
+          ${channelRows}
+        </article>
+
+        <article class="panel">
+          <h2>Quick Links</h2>
+          <div class="footer-links">
+            <a class="btn" href="${escapeHtml(detailHref)}">Summary API</a>
+            <a class="btn" href="/metrics">Metrics</a>
+            <a class="btn" href="/healthz">Health</a>
+            <a class="btn" href="/api">API Index</a>
+          </div>
+        </article>
+      </aside>
+    </section>
+  </div>
+  <script>
+    (() => {
+      const refreshBtn = document.getElementById("refresh-now");
+      const toggleBtn = document.getElementById("toggle-auto");
+      let auto = true;
+      let timer = setInterval(() => window.location.reload(), 30000);
+      refreshBtn?.addEventListener("click", () => window.location.reload());
+      toggleBtn?.addEventListener("click", () => {
+        auto = !auto;
+        if (auto) {
+          timer = setInterval(() => window.location.reload(), 30000);
+          toggleBtn.textContent = "Auto Refresh: ON";
+        } else {
+          clearInterval(timer);
+          toggleBtn.textContent = "Auto Refresh: OFF";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>`;
+  }
 
   return `<!doctype html>
 <html lang="en">
@@ -790,6 +1127,7 @@ app.get("/app", async (request, reply) => {
   const sites = await loadSites();
   const fallbackSiteId = sites[0]?.id ?? "site-a";
   const siteId = sites.some((site) => site.id === query.site) ? String(query.site) : fallbackSiteId;
+  const uiVersion = resolveDashboardUiVersion(runtime.enableWebDashboardUxV2 ?? false);
 
   const [summary, incidents, topOffline, channelQuality, pollState, breaker] = await Promise.all([
     loadSummary(siteId),
@@ -800,7 +1138,14 @@ app.get("/app", async (request, reply) => {
     loadBreaker(siteId)
   ]);
 
+  metrics.dashboardPageViewsTotal.labels(runtime.serviceName, siteId, uiVersion).inc();
+  logger.info("dashboard rendered", {
+    tenant_id: siteId,
+    ui_version: uiVersion
+  });
+
   reply.type("text/html; charset=utf-8");
+  reply.header("x-evernet-ui-version", uiVersion);
   return renderDashboardPage({
     siteId,
     sites,
@@ -809,7 +1154,8 @@ app.get("/app", async (request, reply) => {
     topOffline,
     channelQuality,
     pollState,
-    breaker
+    breaker,
+    enhancedUx: uiVersion === "v2"
   });
 });
 
