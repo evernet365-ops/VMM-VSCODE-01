@@ -64,6 +64,7 @@ corepack pnpm run bootstrap
 corepack pnpm run doctor
 corepack pnpm run verify
 corepack pnpm run stack:up
+corepack pnpm run stack:status
 corepack pnpm run stack:logs
 corepack pnpm run stack:down
 corepack pnpm run typecheck
