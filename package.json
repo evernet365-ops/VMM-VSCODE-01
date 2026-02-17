@@ -11,6 +11,7 @@
     "lint": "corepack pnpm -r --filter @evernet/* run lint",
     "test": "corepack pnpm -r --filter @evernet/* run test",
     "bootstrap": "node scripts/bootstrap.mjs",
+    "doctor": "node scripts/doctor.mjs",
     "verify": "node scripts/verify.mjs",
     "stack:up": "node scripts/stack-up.mjs",
     "stack:down": "node scripts/stack-down.mjs",

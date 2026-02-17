@@ -26,6 +26,7 @@ Enterprise-ready VMM/VMS development skeleton with multi-service architecture, s
 ## Quick Start
 
 ```bash
+corepack pnpm run doctor
 node scripts/bootstrap.mjs
 corepack pnpm run stack:up
 node scripts/smoke-test.mjs
@@ -60,6 +61,7 @@ node scripts/smoke-test.mjs
 
 ```bash
 corepack pnpm run bootstrap
+corepack pnpm run doctor
 corepack pnpm run verify
 corepack pnpm run stack:up
 corepack pnpm run stack:logs
