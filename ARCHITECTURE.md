@@ -44,11 +44,11 @@
 
 ## Polling & State Machine
 
-- Normal: poll every 3–5 minutes with ±60s jitter.
+- Normal: poll every 3-5 minutes with +/-60s jitter.
 - Suspect: poll every 1 minute.
 - Critical: immediate notification path; may enter load shed.
 - Transition triggers:
-  - 5 consecutive API failures or latency > 5s → breaker open, severity critical.
+  - 5 consecutive API failures or latency > 5s -> breaker open, severity critical.
   - Recovery on successful probe lowers severity and closes breaker.
 - State is persisted in `poll_state` and `circuit_breaker_state` for observability and restart safety.
 
@@ -75,16 +75,81 @@ sequenceDiagram
     participant AIW as ai-worker
     participant AIO as ai-orchestrator
     participant NGW as notification-gateway
+    participant DB as postgres
     participant CH as outbound channel
 
-    VSS->>AIO: probe result (offline/missing_recording)
-    AIW->>AIO: AI event (critical/suspect)
-    AIO->>AIO: write ai_event + ai_artifact
+    VSS->>AIO: probe result (offline or missing_recording)
+    AIW->>AIO: AI event (critical or suspect)
+    AIO->>DB: write ai_event and ai_artifact
     AIO->>NGW: POST /internal/notify
-    NGW->>NGW: per-site rate limit + channel policy
-    NGW->>CH: outbound webhook/card/text
-    NGW-->>AIO: result (sent/failed)
-    NGW->>DB: notification_log
+    NGW->>NGW: per-site rate limit and channel policy
+    NGW->>CH: outbound webhook, card, or text
+    NGW->>DB: write notification_log
+    NGW-->>AIO: result (sent or failed)
+```
+
+### Database ER (logical)
+
+```mermaid
+erDiagram
+    site ||--o{ nvr : has
+    site ||--o{ camera : has
+    nvr ||--o{ camera : contains
+    site ||--o{ ai_event : owns
+    camera ||--o{ ai_event : emits
+    ai_event ||--o{ ai_artifact : has
+    site ||--o{ notification_log : records
+    site ||--o{ poll_state : tracks
+    site ||--o{ circuit_breaker_state : tracks
+
+    site {
+        text id PK
+        text name
+        bool enabled
+    }
+    nvr {
+        text id PK
+        text site_id FK
+        text status
+    }
+    camera {
+        text id PK
+        text site_id FK
+        text nvr_id FK
+        text status
+    }
+    ai_event {
+        uuid id PK
+        text site_id FK
+        text camera_id FK
+        text event_type
+        text severity
+        text dedup_key
+    }
+    ai_artifact {
+        uuid id PK
+        uuid event_id FK
+        text type
+        text storage_path
+    }
+    notification_log {
+        bigint id PK
+        text site_id FK
+        text channel
+        text status
+    }
+    poll_state {
+        text site_id PK
+        text component PK
+        text severity
+        bool load_shed_mode
+    }
+    circuit_breaker_state {
+        text site_id PK
+        text target_service PK
+        text state
+        int failure_count
+    }
 ```
 
 ## Observability
