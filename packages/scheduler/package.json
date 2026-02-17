@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "node -e \"console.log('lint:ok @evernet/scheduler')\"",
-    "test": "node -e \"console.log('test:ok @evernet/scheduler')\""
+    "test": "tsx --test src/ntp-sync.test.ts"
   },
   "dependencies": {
     "@evernet/shared": "workspace:*",

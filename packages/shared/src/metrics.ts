@@ -16,6 +16,10 @@ export interface ServiceMetrics {
   cameraDropFrames: Gauge<string>;
   cameraLastFrameTs: Gauge<string>;
   providerProbeTotal: Counter<string>;
+  ntpSyncTotal: Counter<string>;
+  ntpOffsetMs: Gauge<string>;
+  ntpLastSyncTs: Gauge<string>;
+  ntpServerRequestTotal: Counter<string>;
   playbackFallbackTotal: Counter<string>;
   playbackScanDurationMs: Histogram<string>;
   playbackSlowQueryTotal: Counter<string>;
@@ -87,6 +91,34 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     name: "vmm_provider_probe_total",
     help: "Total provider probe attempts by outcome",
     labelNames: ["service", "site_id", "provider", "outcome"],
+    registers: [registry]
+  });
+
+  const ntpSyncTotal = new Counter({
+    name: "vmm_ntp_sync_total",
+    help: "Total NTP sync attempts by outcome",
+    labelNames: ["service", "site_id", "outcome"],
+    registers: [registry]
+  });
+
+  const ntpOffsetMs = new Gauge({
+    name: "vmm_ntp_offset_ms",
+    help: "Observed NTP offset from upstream in milliseconds",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const ntpLastSyncTs = new Gauge({
+    name: "vmm_ntp_last_sync_ts_ms",
+    help: "Timestamp of last NTP sync attempt in milliseconds",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const ntpServerRequestTotal = new Counter({
+    name: "vmm_ntp_server_requests_total",
+    help: "Total local NTP server requests",
+    labelNames: ["service", "site_id", "outcome"],
     registers: [registry]
   });
 
@@ -174,6 +206,10 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     cameraDropFrames,
     cameraLastFrameTs,
     providerProbeTotal,
+    ntpSyncTotal,
+    ntpOffsetMs,
+    ntpLastSyncTs,
+    ntpServerRequestTotal,
     playbackFallbackTotal,
     playbackScanDurationMs,
     playbackSlowQueryTotal,

@@ -57,6 +57,15 @@ export interface ServiceRuntimeConfig {
   enableVmsHikvisionCgi?: boolean;
   enableVmsXmCgi?: boolean;
   enableVmsSampoCgi?: boolean;
+  enableNtpTimeSync?: boolean;
+  ntpServerEnabled?: boolean;
+  ntpServerHost?: string;
+  ntpServerPort?: number;
+  ntpUpstreamHost?: string;
+  ntpUpstreamPort?: number;
+  ntpSyncIntervalMin?: number;
+  ntpRequestTimeoutMs?: number;
+  ntpManualTimeIso?: string;
   vivotekNvrBaseUrl?: string;
   vivotekIpcamBaseUrl?: string;
   vivotekUsername?: string;
@@ -141,6 +150,15 @@ export function loadServiceRuntimeConfig(serviceName: string, defaultPort: numbe
     enableVmsHikvisionCgi: getBooleanEnv("FEATURE_VMS_HIKVISION_CGI", false),
     enableVmsXmCgi: getBooleanEnv("FEATURE_VMS_XM_CGI", false),
     enableVmsSampoCgi: getBooleanEnv("FEATURE_VMS_SAMPO_CGI", false),
+    enableNtpTimeSync: getBooleanEnv("FEATURE_VMM_NTP_TIME_SYNC", false),
+    ntpServerEnabled: getBooleanEnv("NTP_SERVER_ENABLED", false),
+    ntpServerHost: getOptionalEnv("NTP_SERVER_HOST") ?? "0.0.0.0",
+    ntpServerPort: getNumberEnv("NTP_SERVER_PORT", 123),
+    ntpUpstreamHost: getOptionalEnv("NTP_UPSTREAM_HOST") ?? "time.google.com",
+    ntpUpstreamPort: getNumberEnv("NTP_UPSTREAM_PORT", 123),
+    ntpSyncIntervalMin: getNumberEnv("NTP_SYNC_INTERVAL_MIN", 60),
+    ntpRequestTimeoutMs: getNumberEnv("NTP_REQUEST_TIMEOUT_MS", 1500),
+    ntpManualTimeIso: getOptionalEnv("NTP_MANUAL_TIME_ISO"),
     vivotekNvrBaseUrl: getOptionalEnv("VIVOTEK_NVR_BASE_URL"),
     vivotekIpcamBaseUrl: getOptionalEnv("VIVOTEK_IPCAM_BASE_URL"),
     vivotekUsername: getOptionalEnv("VIVOTEK_USERNAME"),

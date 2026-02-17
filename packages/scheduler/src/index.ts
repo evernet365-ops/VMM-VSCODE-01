@@ -7,6 +7,7 @@ import {
   loadServiceRuntimeConfig,
   requestWithRetry
 } from "@evernet/shared";
+import { NtpSyncController, clampSyncIntervalMin } from "./ntp-sync.js";
 
 const runtime = loadServiceRuntimeConfig("scheduler", Number(process.env.SCHEDULER_PORT ?? 3015));
 const logger = createLogger(runtime.serviceName);
@@ -17,9 +18,27 @@ const gatewayUrl = getEnv("NOTIFICATION_GATEWAY_URL", "http://localhost:3010");
 const reportingUrl = getEnv("REPORTING_ENGINE_URL", "http://localhost:3014");
 const sites = (process.env.SCHEDULER_SITES ?? "site-a,site-b").split(",").map((value) => value.trim()).filter(Boolean);
 const intervalMs = getNumberEnv("SCHEDULER_INTERVAL_MS", 60_000);
+const siteId = process.env.CONNECTOR_SITE_ID ?? "site-a";
 
 let timer: NodeJS.Timeout | undefined;
 let lastRun = { at: "", ok: true, summary: "not started" };
+const ntpSync = new NtpSyncController({
+  serviceName: runtime.serviceName,
+  logger,
+  metrics,
+  config: {
+    enabled: runtime.enableNtpTimeSync ?? false,
+    siteId,
+    upstreamHost: runtime.ntpUpstreamHost ?? "time.google.com",
+    upstreamPort: runtime.ntpUpstreamPort ?? 123,
+    syncIntervalMin: clampSyncIntervalMin(runtime.ntpSyncIntervalMin ?? 60),
+    requestTimeoutMs: runtime.ntpRequestTimeoutMs ?? 1500,
+    serverEnabled: runtime.ntpServerEnabled ?? false,
+    serverHost: runtime.ntpServerHost ?? "0.0.0.0",
+    serverPort: runtime.ntpServerPort ?? 123,
+    manualTimeIso: runtime.ntpManualTimeIso
+  }
+});
 
 async function runCycle(): Promise<void> {
   const cycleStart = Date.now();
@@ -85,7 +104,8 @@ app.get("/healthz", async () => {
   return {
     status: lastRun.ok ? "ok" : "degraded",
     service: runtime.serviceName,
-    lastRun
+    lastRun,
+    ntp: ntpSync.getStatus()
   };
 });
 
@@ -94,18 +114,60 @@ app.get("/metrics", async (_, reply) => {
   return metrics.registry.metrics();
 });
 
+app.get("/api/v1/time-sync/status", async () => {
+  return {
+    status: "ok",
+    service: runtime.serviceName,
+    now: ntpSync.getCurrentTimeIso(),
+    ntp: ntpSync.getStatus()
+  };
+});
+
+app.post("/api/v1/time-sync/manual", async (request, reply) => {
+  const body = (request.body ?? {}) as { isoTime?: string | null };
+  const isoTime = body.isoTime ?? undefined;
+
+  const result = ntpSync.setManualTime(isoTime ?? undefined);
+  if (!result.accepted) {
+    reply.status(400);
+    return {
+      status: "invalid",
+      reason: result.reason ?? "unknown"
+    };
+  }
+
+  logger.info("ntp manual time updated", {
+    tenant_id: siteId,
+    mode: isoTime ? "manual" : "upstream"
+  });
+
+  return {
+    status: "ok",
+    now: ntpSync.getCurrentTimeIso(),
+    ntp: ntpSync.getStatus()
+  };
+});
+
 app.post("/internal/run-cycle", async () => {
   await runCycle();
   return { status: "ok", lastRun };
 });
 
 async function start(): Promise<void> {
+  ntpSync.start();
+
   timer = setInterval(() => {
     void runCycle();
   }, intervalMs);
 
   await app.listen({ host: "0.0.0.0", port: runtime.port });
-  logger.info("service started", { port: runtime.port, intervalMs, sites });
+  logger.info("service started", {
+    port: runtime.port,
+    intervalMs,
+    sites,
+    tenant_id: siteId,
+    feature_ntp_time_sync: runtime.enableNtpTimeSync ?? false
+  });
   void runCycle();
 }
 
@@ -114,6 +176,7 @@ async function shutdown(signal: string): Promise<void> {
   if (timer) {
     clearInterval(timer);
   }
+  ntpSync.stop();
   await app.close();
   process.exit(0);
 }
