@@ -35,6 +35,8 @@ describe("playbackWithFallback", () => {
     const result = await playbackWithFallback(new FakePoolSuccess() as any, metrics, "reporting-engine", baseQuery, true);
     assert.equal(result.source, "index");
     assert.equal(result.items.length, 1);
+    assert.equal(typeof result.pageSizeApplied, "number");
+    assert.equal(Boolean(result.windowApplied), true);
   });
 
   it("uses fallback when index fails and flag is ON", async () => {
@@ -42,6 +44,7 @@ describe("playbackWithFallback", () => {
     const result = await playbackWithFallback(new FakePoolFail() as any, metrics, "reporting-engine", baseQuery, true);
     assert.equal(result.source, "fallback");
     assert.ok(result.items.length > 0);
+    assert.equal(Boolean(result.windowApplied), true);
   });
 
   it("throws when index fails and flag is OFF", async () => {
@@ -50,5 +53,52 @@ describe("playbackWithFallback", () => {
       playbackWithFallback(new FakePoolFail() as any, metrics, "reporting-engine", baseQuery, false),
       /index unavailable/
     );
+  });
+
+  it("caps page by fallback max pages when tunable flag is ON", async () => {
+    const metrics = createServiceMetrics("reporting-engine");
+    const result = await playbackWithFallback(
+      new FakePoolFail() as any,
+      metrics,
+      "reporting-engine",
+      { ...baseQuery, page: 9, pageSize: 10 },
+      true,
+      {
+        enableTunable: true,
+        fallbackMaxPages: 3
+      }
+    );
+
+    assert.equal(result.source, "fallback");
+    assert.equal(result.nextPage, undefined);
+  });
+
+  it("uses cache when enabled and hot window matches", async () => {
+    const metrics = createServiceMetrics("reporting-engine");
+    const options = {
+      enableCache: true,
+      cacheTtlMs: 30_000,
+      cacheMaxEntries: 1000,
+      cacheHotWindows: ["1h"]
+    };
+    const first = await playbackWithFallback(
+      new FakePoolSuccess() as any,
+      metrics,
+      "reporting-engine",
+      baseQuery,
+      true,
+      options
+    );
+    const second = await playbackWithFallback(
+      new FakePoolSuccess() as any,
+      metrics,
+      "reporting-engine",
+      baseQuery,
+      true,
+      options
+    );
+
+    assert.equal(first.cacheHit, false);
+    assert.equal(second.cacheHit, true);
   });
 });

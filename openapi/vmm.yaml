@@ -105,6 +105,53 @@ paths:
       responses:
         "200":
           description: Ranked accumulated offline duration
+  /api/v1/sites/{siteId}/playback:
+    get:
+      summary: Playback query with index + fallback scan
+      x-access-class: External
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - in: query
+          name: cameraId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: start
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: end
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: pageSize
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: Playback response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaybackResponse"
+        "400":
+          description: Missing cameraId
+        "503":
+          description: Playback query unavailable
   /api/v1/sites/{siteId}/reports/management/overview:
     get:
       summary: Management KPI overview for decision support
@@ -301,3 +348,54 @@ components:
           format: date-time
         lastError:
           type: string
+    PlaybackRecord:
+      type: object
+      required: [ts, file, durationSec]
+      properties:
+        ts:
+          type: string
+          format: date-time
+        file:
+          type: string
+        durationSec:
+          type: integer
+    PlaybackResponse:
+      type: object
+      required: [siteId, cameraId, source, items]
+      properties:
+        siteId:
+          type: string
+        cameraId:
+          type: string
+        source:
+          type: string
+          enum: [index, fallback]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaybackRecord"
+        nextPage:
+          type: integer
+          minimum: 0
+        total:
+          type: integer
+          minimum: 0
+        windowApplied:
+          type: object
+          required: [start, end]
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        pageSizeApplied:
+          type: integer
+          minimum: 1
+          maximum: 50
+        slowQueryMs:
+          type: integer
+          minimum: 0
+        cacheHit:
+          type: boolean

@@ -61,6 +61,7 @@ export interface ServiceRuntimeConfig {
   enableVmsHealthJitter?: boolean;
   enableVmsBlackframeCapture?: boolean;
   enablePlaybackFallbackTunable?: boolean;
+  enablePlaybackCache?: boolean;
   enableSiteSharding?: boolean;
   enableMcpAutogenPrompts?: boolean;
   ntpServerEnabled?: boolean;
@@ -80,6 +81,9 @@ export interface ServiceRuntimeConfig {
   playbackFallbackMaxPages?: number;
   playbackSlowMs?: number;
   playbackSlowAlertThreshold?: number;
+  playbackCacheTtlMs?: number;
+  playbackCacheMaxEntries?: number;
+  playbackCacheHotWindows?: string;
   siteShardWeights?: string;
   siteShardBuckets?: number;
   mcpAutogenEnabled?: boolean;
@@ -172,6 +176,7 @@ export function loadServiceRuntimeConfig(serviceName: string, defaultPort: numbe
     enableVmsHealthJitter: getBooleanEnv("FEATURE_VMS_HEALTH_JITTER", false),
     enableVmsBlackframeCapture: getBooleanEnv("FEATURE_VMS_BLACKFRAME_CAPTURE", false),
     enablePlaybackFallbackTunable: getBooleanEnv("FEATURE_VMM_PLAYBACK_FALLBACK_TUNABLE", false),
+    enablePlaybackCache: getBooleanEnv("FEATURE_VMM_PLAYBACK_CACHE", false),
     enableSiteSharding: getBooleanEnv("FEATURE_VMM_SITE_SHARDING", false),
     enableMcpAutogenPrompts: getBooleanEnv("FEATURE_MCP_AUTOGEN_PROMPTS", false),
     ntpServerEnabled: getBooleanEnv("NTP_SERVER_ENABLED", false),
@@ -191,6 +196,9 @@ export function loadServiceRuntimeConfig(serviceName: string, defaultPort: numbe
     playbackFallbackMaxPages: getNumberEnv("PLAYBACK_FALLBACK_MAX_PAGES", 5),
     playbackSlowMs: getNumberEnv("PLAYBACK_SLOW_MS", 800),
     playbackSlowAlertThreshold: getNumberEnv("PLAYBACK_SLOW_ALERT_THRESHOLD", 10),
+    playbackCacheTtlMs: getNumberEnv("PLAYBACK_CACHE_TTL_MS", 300000),
+    playbackCacheMaxEntries: getNumberEnv("PLAYBACK_CACHE_MAX_ENTRIES", 1000),
+    playbackCacheHotWindows: getOptionalEnv("PLAYBACK_CACHE_HOT_WINDOWS") ?? "15m,1h",
     siteShardWeights: getOptionalEnv("SITE_SHARD_WEIGHTS"),
     siteShardBuckets: getNumberEnv("SITE_SHARD_BUCKETS", 60),
     mcpAutogenEnabled: getBooleanEnv("MCP_AUTOGEN_ENABLED", false),

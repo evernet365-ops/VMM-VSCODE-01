@@ -171,14 +171,38 @@ app.get("/api/v1/sites/:siteId/playback", async (request, reply) => {
   const enableFallback = runtime.enablePlaybackFallbackScan ?? false;
 
   try {
-    const result = await playbackWithFallback(db, metrics, runtime.serviceName, playbackQuery, enableFallback);
+    const result = await playbackWithFallback(
+      db,
+      metrics,
+      runtime.serviceName,
+      playbackQuery,
+      enableFallback,
+      {
+        enableTunable: runtime.enablePlaybackFallbackTunable ?? false,
+        fallbackWindowSec: runtime.playbackFallbackWindowSec ?? 3600,
+        fallbackMaxPages: runtime.playbackFallbackMaxPages ?? 5,
+        slowMs: runtime.playbackSlowMs ?? 800,
+        slowAlertThreshold: runtime.playbackSlowAlertThreshold ?? 10,
+        enableCache: runtime.enablePlaybackCache ?? false,
+        cacheTtlMs: runtime.playbackCacheTtlMs ?? 300000,
+        cacheMaxEntries: runtime.playbackCacheMaxEntries ?? 1000,
+        cacheHotWindows: String(runtime.playbackCacheHotWindows ?? "15m,1h")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      }
+    );
     return {
       siteId: params.siteId,
       cameraId,
       source: result.source,
       items: result.items,
       nextPage: result.nextPage,
-      total: result.total
+      total: result.total,
+      windowApplied: result.windowApplied,
+      pageSizeApplied: result.pageSizeApplied,
+      slowQueryMs: result.slowQueryMs,
+      cacheHit: result.cacheHit
     };
   } catch (error) {
     logger.error("playback query failed", { error: String(error) });

@@ -27,6 +27,11 @@ export interface ServiceMetrics {
   playbackFallbackTotal: Counter<string>;
   playbackScanDurationMs: Histogram<string>;
   playbackSlowQueryTotal: Counter<string>;
+  playbackSlowQueryAlertTotal: Counter<string>;
+  playbackCacheHitsTotal: Counter<string>;
+  playbackCacheMissTotal: Counter<string>;
+  playbackCacheEvictTotal: Counter<string>;
+  playbackCacheTtlExpiredTotal: Counter<string>;
   managementReportRequestsTotal: Counter<string>;
   managementReportSlowQueryTotal: Counter<string>;
   aiEventsTotal: Counter<string>;
@@ -176,6 +181,41 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     registers: [registry]
   });
 
+  const playbackSlowQueryAlertTotal = new Counter({
+    name: "vmm_playback_slow_query_alert_total",
+    help: "Count of playback slow query alert threshold crossings",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const playbackCacheHitsTotal = new Counter({
+    name: "vmm_playback_cache_hits_total",
+    help: "Count of playback cache hits",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const playbackCacheMissTotal = new Counter({
+    name: "vmm_playback_cache_miss_total",
+    help: "Count of playback cache misses",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const playbackCacheEvictTotal = new Counter({
+    name: "vmm_playback_cache_evict_total",
+    help: "Count of playback cache evictions",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const playbackCacheTtlExpiredTotal = new Counter({
+    name: "vmm_playback_cache_ttl_expired_total",
+    help: "Count of playback cache ttl expirations",
+    labelNames: labels,
+    registers: [registry]
+  });
+
   const managementReportRequestsTotal = new Counter({
     name: "vmm_management_report_requests_total",
     help: "Total management report requests",
@@ -249,6 +289,11 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     playbackFallbackTotal,
     playbackScanDurationMs,
     playbackSlowQueryTotal,
+    playbackSlowQueryAlertTotal,
+    playbackCacheHitsTotal,
+    playbackCacheMissTotal,
+    playbackCacheEvictTotal,
+    playbackCacheTtlExpiredTotal,
     managementReportRequestsTotal,
     managementReportSlowQueryTotal,
     aiEventsTotal,
