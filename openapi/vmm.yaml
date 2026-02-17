@@ -9,12 +9,14 @@ paths:
   /healthz:
     get:
       summary: Generic health check endpoint
+      x-access-class: Ops
       responses:
         "200":
           description: Service health
   /internal/events:
     post:
       summary: Ingest AI event from worker
+      x-access-class: Internal
       requestBody:
         required: true
         content:
@@ -27,6 +29,7 @@ paths:
   /api/v1/sites/{siteId}/ai-events:
     get:
       summary: Query AI events by site
+      x-access-class: External
       parameters:
         - in: path
           name: siteId
@@ -45,6 +48,7 @@ paths:
   /api/v1/sites/{siteId}/poll-state:
     get:
       summary: Query connector poll state by site
+      x-access-class: External
       parameters:
         - in: path
           name: siteId
@@ -57,6 +61,7 @@ paths:
   /api/v1/sites/{siteId}/reports/anomalies:
     get:
       summary: Query anomalies by window
+      x-access-class: External
       parameters:
         - $ref: "#/components/parameters/SiteId"
         - $ref: "#/components/parameters/Window"
@@ -66,6 +71,7 @@ paths:
   /api/v1/sites/{siteId}/reports/top-offline:
     get:
       summary: Top 20 offline cameras
+      x-access-class: External
       parameters:
         - $ref: "#/components/parameters/SiteId"
         - $ref: "#/components/parameters/Window"
@@ -75,6 +81,7 @@ paths:
   /api/v1/sites/{siteId}/reports/top-missing-recording:
     get:
       summary: Top 20 missing recording cameras
+      x-access-class: External
       parameters:
         - $ref: "#/components/parameters/SiteId"
         - $ref: "#/components/parameters/Window"
@@ -84,6 +91,7 @@ paths:
   /api/v1/sites/{siteId}/reports/accumulated-offline:
     get:
       summary: Rank by accumulated offline duration
+      x-access-class: External
       parameters:
         - $ref: "#/components/parameters/SiteId"
         - $ref: "#/components/parameters/Window"
@@ -93,6 +101,7 @@ paths:
   /api/v1/sites/{siteId}/dashboard/summary:
     get:
       summary: Site dashboard summary
+      x-access-class: External
       parameters:
         - $ref: "#/components/parameters/SiteId"
       responses:

@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
 
+      - name: OpenAPI boundary check
+        run: corepack pnpm run openapi:check
+
       - name: Typecheck
         run: corepack pnpm run typecheck
 
