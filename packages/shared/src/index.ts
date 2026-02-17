@@ -5,3 +5,4 @@ export * from "./db.js";
 export * from "./metrics.js";
 export * from "./http.js";
 export * from "./polling.js";
+export * from "./health.js";

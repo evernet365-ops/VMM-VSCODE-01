@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+set -e
+command -v pnpm >/dev/null 2>&1 || { echo 'pnpm not found; skip mcp:update'; exit 0; }
+pnpm mcp:update
+
