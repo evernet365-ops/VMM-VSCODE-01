@@ -67,7 +67,10 @@ jobs:
           done
 
       - name: Run smoke test
-        run: node scripts/smoke-test.mjs
+        run: |
+          node scripts/smoke-test.mjs
+          node scripts/connector-vss-smoke.mjs
+          node scripts/scheduler-ntp-smoke.mjs
 
       - name: Dump service logs on failure
         if: failure()

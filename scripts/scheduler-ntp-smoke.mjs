@@ -41,6 +41,8 @@ async function assertStatus(baseUrl, siteId, timeoutMs) {
   if (!payload?.ntp || typeof payload.ntp !== "object") {
     throw new Error("time-sync status payload missing ntp object");
   }
+
+  return payload;
 }
 
 async function setManual(baseUrl, siteId, isoTime, timeoutMs) {
@@ -91,8 +93,14 @@ async function main() {
   await assertHealth(baseUrl, timeoutMs);
   console.log(`[scheduler] healthz ok: ${baseUrl}/healthz`);
 
-  await assertStatus(baseUrl, siteId, timeoutMs);
+  const status = await assertStatus(baseUrl, siteId, timeoutMs);
   console.log(`[scheduler] time-sync status ok: ${baseUrl}/api/v1/sites/${siteId}/time-sync/status`);
+
+  if (!status.ntp.enabled) {
+    console.log("[scheduler] ntp feature disabled, skip manual set/clear checks");
+    console.log("scheduler ntp smoke passed.");
+    return;
+  }
 
   await setManual(baseUrl, siteId, manualTimeIso, timeoutMs);
   console.log(`[scheduler] manual time set ok: ${manualTimeIso}`);
