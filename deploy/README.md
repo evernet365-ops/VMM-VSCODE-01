@@ -5,6 +5,7 @@ This folder keeps deployment-only environment overlays that are loaded on top of
 ## Files
 
 - `env/connector-vss.prod.env`: production defaults for `connector-vss` vendor probes and feature flags.
+- `env/scheduler.prod.env`: production defaults for `scheduler` NTP sync/server controls.
 
 ## Loading order
 
@@ -14,6 +15,11 @@ This folder keeps deployment-only environment overlays that are loaded on top of
 2. `deploy/env/connector-vss.prod.env`
 
 Later files override earlier values.
+
+`docker-compose.yml` loads env files for `scheduler` in this order:
+
+1. `.env.example`
+2. `deploy/env/scheduler.prod.env`
 
 ## Safe rollout procedure
 

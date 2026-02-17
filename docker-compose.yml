@@ -174,6 +174,7 @@ services:
     command: ["pnpm", "--filter", "@evernet/scheduler", "start"]
     env_file:
       - .env.example
+      - ./deploy/env/scheduler.prod.env
     environment:
       PORT: ${SCHEDULER_PORT:-3015}
     depends_on:
