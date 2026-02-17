@@ -74,6 +74,7 @@ corepack pnpm run stack:down
 corepack pnpm run drill:webhook
 corepack pnpm run drill:circuit
 corepack pnpm run drill:db
+corepack pnpm run release:cut -- v0.1.1
 corepack pnpm run typecheck
 corepack pnpm run build
 corepack pnpm run test

@@ -24,6 +24,7 @@
     "drill:webhook": "node scripts/drill-webhook-failure.mjs",
     "drill:db": "node scripts/drill-db-failure.mjs --confirm-stop-db --auto-recover",
     "drill:circuit": "node scripts/drill-circuit-observe.mjs",
+    "release:cut": "node scripts/release-cut.mjs",
     "migrate": "node scripts/migrate.mjs",
     "seed": "node scripts/seed.mjs",
     "smoke": "node scripts/smoke-test.mjs"
