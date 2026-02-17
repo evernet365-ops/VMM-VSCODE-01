@@ -30,6 +30,7 @@
     "docs:check": "node scripts/check-doc-contract.mjs",
     "api-docs:build": "node scripts/api-docs.mjs",
     "env:check": "node scripts/check-env-contract.mjs",
+    "deploy:env:check": "node scripts/check-deploy-env.mjs",
     "openapi:check": "node scripts/check-openapi-access-class.mjs",
     "contract:reporting": "node scripts/contract-check-reporting-engine.mjs",
     "contract:orchestrator": "node scripts/contract-check-ai-orchestrator.mjs",

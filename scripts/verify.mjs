@@ -25,6 +25,7 @@ async function main() {
   const checks = [
     ["node", ["scripts/check-doc-contract.mjs"]],
     ["node", ["scripts/check-env-contract.mjs"]],
+    ["node", ["scripts/check-deploy-env.mjs"]],
     ["node", ["scripts/check-openapi-access-class.mjs"]],
     ["corepack", ["pnpm", "run", "contract:test"]],
     ["corepack", ["pnpm", "run", "api-docs:build"]],

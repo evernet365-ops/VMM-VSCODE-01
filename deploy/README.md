@@ -22,6 +22,7 @@ Later files override earlier values.
 3. Replace placeholder secrets before deployment:
    - `SAMPO_PASSWORD`
 4. Run:
+   - `corepack pnpm run deploy:env:check`
    - `docker compose config`
    - `corepack pnpm --filter @evernet/connector-vss run test`
 5. Deploy and verify:

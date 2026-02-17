@@ -38,6 +38,9 @@ jobs:
       - name: Environment contract check
         run: corepack pnpm run env:check
 
+      - name: Deploy env contract check
+        run: corepack pnpm run deploy:env:check
+
       - name: Documentation contract check
         run: corepack pnpm run docs:check
 
