@@ -66,12 +66,46 @@
 - Cards mode supports summary/top20/links with auto-slicing (buttonsPerCard=6).
 - Success/failure logged to `notification_log`; Prometheus metrics `vmm_notification_sent_total` and `vmm_notification_failed_total`.
 
+### Alert Path (sequence)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant VSS as connector-vss
+    participant AIW as ai-worker
+    participant AIO as ai-orchestrator
+    participant NGW as notification-gateway
+    participant CH as outbound channel
+
+    VSS->>AIO: probe result (offline/missing_recording)
+    AIW->>AIO: AI event (critical/suspect)
+    AIO->>AIO: write ai_event + ai_artifact
+    AIO->>NGW: POST /internal/notify
+    NGW->>NGW: per-site rate limit + channel policy
+    NGW->>CH: outbound webhook/card/text
+    NGW-->>AIO: result (sent/failed)
+    NGW->>DB: notification_log
+```
+
 ## Observability
 
 - Metrics: Prometheus scrapes each service `/metrics`.
 - Key metrics: camera/nvr online/offline, ai_events_total, notification_sent/failed, api latency histogram, db pool gauge.
 - Grafana dashboard provisioned from `config/grafana/dashboards/vmm-overview.json`.
 - Health: each service exposes `/healthz`; `stack:wait` and CI smoke rely on these.
+
+### Polling State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> normal
+    normal --> suspect : probe failure\n(<5 times) or offline count >0\npoll 3-5m + jitter
+    suspect --> critical : 5 consecutive failures\nor latency >5s
+    suspect --> normal : probe success
+    critical --> suspect : probe success
+    critical --> normal : sustained success
+    critical : load_shed = true\nnotify critical immediately
+```
 
 ## Deployment & Ops
 
