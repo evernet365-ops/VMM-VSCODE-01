@@ -33,6 +33,9 @@ async function main() {
   console.log("==> Connector smoke test");
   await run("corepack", ["pnpm", "run", "smoke:connector"]);
 
+  console.log("==> Scheduler NTP smoke test");
+  await run("corepack", ["pnpm", "run", "smoke:scheduler:ntp"]);
+
   console.log("Stack smoke completed.");
 }
 

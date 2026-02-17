@@ -35,6 +35,7 @@ Later files override earlier values.
    - `http://<connector-vss-host>:3013/healthz`
    - `http://<connector-vss-host>:3013/metrics`
    - `corepack pnpm run smoke:connector`
+   - `corepack pnpm run smoke:scheduler:ntp`
 
 ## Rollback
 
