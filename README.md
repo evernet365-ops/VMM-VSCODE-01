@@ -72,6 +72,8 @@ corepack pnpm run smoke
 - GitHub Actions workflow: `.github/workflows/ci.yml`
 - Runs on `push`/`pull_request` to `main`
 - Pipeline steps: install -> typecheck -> build -> test -> lint
+- Docker smoke workflow: `.github/workflows/docker-smoke.yml`
+- Docker smoke steps: compose up -> health checks -> smoke script -> compose down
 
 ## Asset Usage
 

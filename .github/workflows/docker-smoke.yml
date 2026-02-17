@@ -1,0 +1,78 @@
+name: Docker Smoke
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: docker-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup Corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        run: corepack prepare pnpm@10.4.1 --activate
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Build and start stack
+        run: docker compose up -d --build
+
+      - name: Wait for core health endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          targets=(
+            "http://localhost:3010/healthz"
+            "http://localhost:3011/healthz"
+            "http://localhost:3012/healthz"
+            "http://localhost:3013/healthz"
+            "http://localhost:3014/healthz"
+            "http://localhost:3015/healthz"
+            "http://localhost:3016/healthz"
+          )
+          for target in "${targets[@]}"; do
+            echo "waiting for $target"
+            for i in {1..60}; do
+              if curl -fsS "$target" >/dev/null; then
+                echo "healthy: $target"
+                break
+              fi
+              if [[ "$i" == "60" ]]; then
+                echo "timeout waiting for $target"
+                exit 1
+              fi
+              sleep 5
+            done
+          done
+
+      - name: Run smoke test
+        run: node scripts/smoke-test.mjs
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Shutdown stack
+        if: always()
+        run: docker compose down -v --remove-orphans
