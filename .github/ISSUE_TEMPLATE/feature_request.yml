@@ -1,0 +1,55 @@
+name: Feature Request
+description: Propose a new feature or workflow improvement
+labels: [enhancement]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Feature Title
+      placeholder: Short title
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem are we trying to solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Outline behavior, API, and expected UX
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Primary Impact Area
+      options:
+        - Reliability
+        - Performance
+        - Security
+        - UX
+        - Operations
+        - Developer Experience
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: compliance
+    attributes:
+      label: Compliance Check
+      options:
+        - label: Preserves site isolation
+        - label: Does not bypass notification-gateway
+        - label: Includes observability impact

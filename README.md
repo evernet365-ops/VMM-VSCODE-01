@@ -75,6 +75,12 @@ corepack pnpm run smoke
 - Docker smoke workflow: `.github/workflows/docker-smoke.yml`
 - Docker smoke steps: compose up -> health checks -> smoke script -> compose down
 
+## Collaboration Templates
+
+- PR template: `.github/pull_request_template.md`
+- Issue templates: `.github/ISSUE_TEMPLATE/*`
+- Code ownership rules: `.github/CODEOWNERS`
+
 ## Asset Usage
 
 - Static assets are served by `web-dashboard` from `/assets/*`

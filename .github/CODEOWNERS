@@ -1,0 +1,21 @@
+# Default owners
+* @evernet365-ops
+
+# Service ownership
+/packages/connector-vss/ @evernet365-ops
+/packages/ai-orchestrator/ @evernet365-ops
+/packages/ai-worker/ @evernet365-ops
+/packages/notification-gateway/ @evernet365-ops
+/packages/reporting-engine/ @evernet365-ops
+/packages/scheduler/ @evernet365-ops
+/packages/web-dashboard/ @evernet365-ops
+/packages/shared/ @evernet365-ops
+
+# Infra and docs ownership
+/docker-compose.yml @evernet365-ops
+/docker/ @evernet365-ops
+/db/ @evernet365-ops
+/openapi/ @evernet365-ops
+/config/ @evernet365-ops
+/runbook/ @evernet365-ops
+/*.md @evernet365-ops
