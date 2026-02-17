@@ -74,6 +74,10 @@ corepack pnpm run smoke
 - Pipeline steps: install -> typecheck -> build -> test -> lint
 - Docker smoke workflow: `.github/workflows/docker-smoke.yml`
 - Docker smoke steps: compose up -> health checks -> smoke script -> compose down
+- Release workflow: `.github/workflows/release.yml`
+- Release triggers:
+  - push tag `v*` (auto publish release)
+  - manual dispatch with existing tag input
 
 ## Collaboration Templates
 

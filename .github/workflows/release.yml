@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.1.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+            git fetch --tags
+            if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+              echo "Tag $TAG does not exist."
+              exit 1
+            fi
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          PREV_TAG="$(git tag --sort=-creatordate | grep -v "^$TAG$" | head -n 1 || true)"
+
+          if [[ -n "$PREV_TAG" ]]; then
+            echo "Generated from $PREV_TAG to $TAG" > release-notes.txt
+            echo "" >> release-notes.txt
+            git log --pretty=format:"- %h %s" "$PREV_TAG..$TAG" >> release-notes.txt
+          else
+            echo "Initial release $TAG" > release-notes.txt
+            echo "" >> release-notes.txt
+            git log --pretty=format:"- %h %s" "$TAG" >> release-notes.txt
+          fi
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          body_path: release-notes.txt
+          draft: false
+          prerelease: false
