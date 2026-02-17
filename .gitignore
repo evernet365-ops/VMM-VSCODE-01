@@ -5,6 +5,8 @@ dist/
 .env
 coverage/
 .tmp/
+.cursor/
+.vscode/
 .DS_Store
 postgres-data/
 grafana-data/
