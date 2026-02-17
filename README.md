@@ -66,6 +66,7 @@ corepack pnpm run verify
 corepack pnpm run stack:up
 corepack pnpm run stack:status
 corepack pnpm run stack:logs
+corepack pnpm run stack:smoke
 corepack pnpm run stack:down
 corepack pnpm run typecheck
 corepack pnpm run build
