@@ -125,6 +125,7 @@ services:
     command: ["pnpm", "--filter", "@evernet/connector-vss", "start"]
     env_file:
       - .env.example
+      - ./deploy/env/connector-vss.prod.env
     environment:
       PORT: ${CONNECTOR_VSS_PORT:-3013}
     depends_on:
