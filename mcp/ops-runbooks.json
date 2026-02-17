@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-17T01:58:51.470Z",
+  "runbooks": [
+    {
+      "name": "drill-circuit-observe",
+      "path": "scripts/drill-circuit-observe.mjs"
+    },
+    {
+      "name": "drill-db-failure",
+      "path": "scripts/drill-db-failure.mjs"
+    },
+    {
+      "name": "drill-webhook-failure",
+      "path": "scripts/drill-webhook-failure.mjs"
+    },
+    {
+      "name": "smoke-test",
+      "path": "scripts/smoke-test.mjs"
+    },
+    {
+      "name": "stack-clean",
+      "path": "scripts/stack-clean.mjs"
+    },
+    {
+      "name": "stack-diag",
+      "path": "scripts/stack-diag.mjs"
+    },
+    {
+      "name": "stack-down",
+      "path": "scripts/stack-down.mjs"
+    },
+    {
+      "name": "stack-logs",
+      "path": "scripts/stack-logs.mjs"
+    },
+    {
+      "name": "stack-smoke",
+      "path": "scripts/stack-smoke.mjs"
+    },
+    {
+      "name": "stack-status",
+      "path": "scripts/stack-status.mjs"
+    },
+    {
+      "name": "stack-up",
+      "path": "scripts/stack-up.mjs"
+    },
+    {
+      "name": "stack-wait",
+      "path": "scripts/stack-wait.mjs"
+    }
+  ]
+}

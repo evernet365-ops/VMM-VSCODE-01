@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-17T01:19:08.897Z",
+  "migrations": [
+    "0001_init.sql",
+    "0002_indexes.sql"
+  ],
+  "schemas": [
+    {
+      "name": "public",
+      "tables": [
+        "ai_artifact",
+        "ai_event",
+        "camera",
+        "circuit_breaker_state",
+        "notification_log",
+        "nvr",
+        "poll_state",
+        "site"
+      ]
+    }
+  ]
+}

@@ -44,6 +44,9 @@ jobs:
       - name: OpenAPI boundary check
         run: corepack pnpm run openapi:check
 
+      - name: MCP resource update+check
+        run: corepack pnpm run mcp:update
+
       - name: Typecheck
         run: corepack pnpm run typecheck
 

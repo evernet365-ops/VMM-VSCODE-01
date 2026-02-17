@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-17T04:13:48.705Z",
+  "services": [
+    {
+      "name": "ai-orchestrator",
+      "port": 3011,
+      "health": "http://localhost:3011/healthz",
+      "metrics": "http://localhost:3011/metrics",
+      "owners": [
+        "team-ml"
+      ]
+    },
+    {
+      "name": "ai-worker",
+      "port": 3012,
+      "health": "http://localhost:3012/healthz",
+      "metrics": "http://localhost:3012/metrics",
+      "owners": [
+        "team-ml"
+      ]
+    },
+    {
+      "name": "connector-vss",
+      "port": 3013,
+      "health": "http://localhost:3013/healthz",
+      "metrics": "http://localhost:3013/metrics",
+      "owners": [
+        "team-video"
+      ]
+    },
+    {
+      "name": "notification-gateway",
+      "port": 3010,
+      "health": "http://localhost:3010/healthz",
+      "metrics": "http://localhost:3010/metrics",
+      "owners": [
+        "team-ops"
+      ]
+    },
+    {
+      "name": "reporting-engine",
+      "port": 3014,
+      "health": "http://localhost:3014/healthz",
+      "metrics": "http://localhost:3014/metrics",
+      "owners": [
+        "team-analytics"
+      ]
+    },
+    {
+      "name": "scheduler",
+      "port": 3015,
+      "health": "http://localhost:3015/healthz",
+      "metrics": "http://localhost:3015/metrics",
+      "owners": [
+        "team-ops"
+      ]
+    },
+    {
+      "name": "web-dashboard",
+      "port": 3016,
+      "health": "http://localhost:3016/healthz",
+      "metrics": "http://localhost:3016/metrics",
+      "owners": [
+        "team-frontend"
+      ]
+    }
+  ]
+}

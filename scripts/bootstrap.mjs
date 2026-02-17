@@ -25,6 +25,13 @@ async function main() {
   console.log("==> Preparing pnpm");
   await run("corepack", ["prepare", "pnpm@10.4.1", "--activate"]);
 
+  console.log("==> Enabling git hooks path (.githooks)");
+  try {
+    await run("git", ["config", "core.hooksPath", ".githooks"]);
+  } catch (error) {
+    console.warn("Skipping hooksPath setup (git not available?):", error.message);
+  }
+
   console.log("==> Installing workspace dependencies");
   await run("corepack", ["pnpm", "install"]);
 

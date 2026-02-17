@@ -13,7 +13,7 @@ COPY config ./config
 COPY assets ./assets
 COPY openapi ./openapi
 
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --recursive --no-frozen-lockfile
 
 ENV NODE_ENV=production
 

@@ -105,6 +105,36 @@ paths:
       responses:
         "200":
           description: Ranked accumulated offline duration
+  /api/v1/sites/{siteId}/reports/management/overview:
+    get:
+      summary: Management KPI overview for decision support
+      x-access-class: External
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - $ref: "#/components/parameters/Window"
+      responses:
+        "200":
+          description: Management KPI overview
+  /api/v1/sites/{siteId}/reports/management/channel-performance:
+    get:
+      summary: Notification channel performance ranking
+      x-access-class: External
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - $ref: "#/components/parameters/Window"
+      responses:
+        "200":
+          description: Channel performance result
+  /api/v1/sites/{siteId}/reports/management/risk-ranking:
+    get:
+      summary: Camera risk ranking by weighted severity
+      x-access-class: External
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - $ref: "#/components/parameters/Window"
+      responses:
+        "200":
+          description: Risk ranking result
   /api/v1/sites/{siteId}/dashboard/summary:
     get:
       summary: Site dashboard summary

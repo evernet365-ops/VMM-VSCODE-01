@@ -6,6 +6,14 @@ import {
   getDbPool,
   loadServiceRuntimeConfig
 } from "@evernet/shared";
+import { playbackWithFallback, type PlaybackQuery } from "./playback.js";
+import {
+  queryChannelPerformance,
+  queryDecisionOverview,
+  queryRiskRanking,
+  toManagementInterval,
+  withManagementMetric
+} from "./management-report.js";
 
 const runtime = loadServiceRuntimeConfig("reporting-engine", Number(process.env.REPORTING_ENGINE_PORT ?? 3014));
 const logger = createLogger(runtime.serviceName);
@@ -139,6 +147,107 @@ app.get("/api/v1/sites/:siteId/reports/accumulated-offline", async (request) => 
     window,
     ranked: result.rows
   };
+});
+
+app.get("/api/v1/sites/:siteId/playback", async (request, reply) => {
+  const params = request.params as { siteId: string; cameraId?: string };
+  const query = request.query as { cameraId?: string; start?: string; end?: string; page?: string; pageSize?: string };
+
+  const cameraId = query.cameraId ?? params.cameraId;
+  if (!cameraId) {
+    reply.status(400);
+    return { error: "cameraId is required" };
+  }
+
+  const playbackQuery: PlaybackQuery = {
+    siteId: params.siteId,
+    cameraId,
+    start: query.start ?? new Date(Date.now() - 3_600_000).toISOString(),
+    end: query.end ?? new Date().toISOString(),
+    page: Number(query.page ?? "0"),
+    pageSize: Number(query.pageSize ?? "10")
+  };
+
+  const enableFallback = runtime.enablePlaybackFallbackScan ?? false;
+
+  try {
+    const result = await playbackWithFallback(db, metrics, runtime.serviceName, playbackQuery, enableFallback);
+    return {
+      siteId: params.siteId,
+      cameraId,
+      source: result.source,
+      items: result.items,
+      nextPage: result.nextPage,
+      total: result.total
+    };
+  } catch (error) {
+    logger.error("playback query failed", { error: String(error) });
+    reply.status(503);
+    return { error: enableFallback ? "playback unavailable" : "playback index unavailable" };
+  }
+});
+
+app.get("/api/v1/sites/:siteId/reports/management/overview", async (request) => {
+  const params = request.params as { siteId: string };
+  const query = request.query as { window?: string };
+
+  if (!(runtime.enableManagementReports ?? false)) {
+    return {
+      siteId: params.siteId,
+      featureEnabled: false,
+      data: null,
+      note: "FEATURE_VMM_MANAGEMENT_REPORTS is disabled"
+    };
+  }
+
+  const interval = toManagementInterval(query.window ?? "24h");
+  const data = await withManagementMetric(metrics, runtime.serviceName, params.siteId, "overview", () =>
+    queryDecisionOverview(db, params.siteId, interval)
+  );
+  logger.info("management overview queried", { siteId: params.siteId, interval });
+  return { siteId: params.siteId, featureEnabled: true, interval, data };
+});
+
+app.get("/api/v1/sites/:siteId/reports/management/channel-performance", async (request) => {
+  const params = request.params as { siteId: string };
+  const query = request.query as { window?: string };
+
+  if (!(runtime.enableManagementReports ?? false)) {
+    return {
+      siteId: params.siteId,
+      featureEnabled: false,
+      items: [],
+      note: "FEATURE_VMM_MANAGEMENT_REPORTS is disabled"
+    };
+  }
+
+  const interval = toManagementInterval(query.window ?? "24h");
+  const items = await withManagementMetric(metrics, runtime.serviceName, params.siteId, "channel-performance", () =>
+    queryChannelPerformance(db, params.siteId, interval)
+  );
+  logger.info("management channel performance queried", { siteId: params.siteId, interval });
+  return { siteId: params.siteId, featureEnabled: true, interval, items };
+});
+
+app.get("/api/v1/sites/:siteId/reports/management/risk-ranking", async (request) => {
+  const params = request.params as { siteId: string };
+  const query = request.query as { window?: string };
+
+  if (!(runtime.enableManagementReports ?? false)) {
+    return {
+      siteId: params.siteId,
+      featureEnabled: false,
+      top20: [],
+      note: "FEATURE_VMM_MANAGEMENT_REPORTS is disabled"
+    };
+  }
+
+  const interval = toManagementInterval(query.window ?? "24h");
+  const top20 = await withManagementMetric(metrics, runtime.serviceName, params.siteId, "risk-ranking", () =>
+    queryRiskRanking(db, params.siteId, interval)
+  );
+  logger.info("management risk ranking queried", { siteId: params.siteId, interval });
+  return { siteId: params.siteId, featureEnabled: true, interval, top20 };
 });
 
 async function start(): Promise<void> {

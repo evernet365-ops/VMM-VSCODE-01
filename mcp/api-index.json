@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-17T04:16:03.560Z",
+  "openapi": [
+    {
+      "name": "notification-gateway",
+      "path": "openapi/notification-gateway.yaml"
+    },
+    {
+      "name": "vmm",
+      "path": "openapi/vmm.yaml"
+    }
+  ],
+  "opsEndpoints": []
+}

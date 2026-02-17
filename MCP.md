@@ -28,6 +28,6 @@ This project can consume MCP resources to provide controlled context for coding 
 ## Update Process
 
 1. Update source files.
-2. Regenerate MCP resource payloads.
+2. Regenerate MCP resource payloads: `pnpm mcp:update`
 3. Validate against schema.
 4. Publish new version with changelog entry.

@@ -14,6 +14,8 @@ Enterprise-ready VMM/VMS development skeleton with multi-service architecture, s
 - `CONTRIBUTING.md`: contribution workflow
 - `SECURITY.md`: security baseline and secrets handling
 - `runbook/RUNBOOK.md`: incident runbook and drills
+- `docs/API_INTEGRATION.md`: external integration guide (endpoints, params, examples, observability)
+- `.githooks/pre-commit`: sample hook to run `pnpm mcp:update` (enable via `git config core.hooksPath .githooks`)
 
 ## Stack
 
