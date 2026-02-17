@@ -38,6 +38,9 @@ jobs:
       - name: Environment contract check
         run: corepack pnpm run env:check
 
+      - name: Documentation contract check
+        run: corepack pnpm run docs:check
+
       - name: OpenAPI boundary check
         run: corepack pnpm run openapi:check
 

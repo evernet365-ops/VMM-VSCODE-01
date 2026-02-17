@@ -74,6 +74,7 @@ corepack pnpm run stack:down
 corepack pnpm run drill:webhook
 corepack pnpm run drill:circuit
 corepack pnpm run drill:db
+corepack pnpm run docs:check
 corepack pnpm run env:check
 corepack pnpm run openapi:check
 corepack pnpm run release:cut -- v0.1.1
@@ -88,7 +89,7 @@ corepack pnpm run smoke
 
 - GitHub Actions workflow: `.github/workflows/ci.yml`
 - Runs on `push`/`pull_request` to `main`
-- Pipeline steps: install -> env:check -> openapi:check -> typecheck -> build -> test -> lint
+- Pipeline steps: install -> env:check -> docs:check -> openapi:check -> typecheck -> build -> test -> lint
 - Docker smoke workflow: `.github/workflows/docker-smoke.yml`
 - Docker smoke steps: compose up -> health checks -> smoke script -> compose down
 - Release workflow: `.github/workflows/release.yml`

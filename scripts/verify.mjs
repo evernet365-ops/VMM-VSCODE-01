@@ -23,6 +23,7 @@ function run(command, args) {
 
 async function main() {
   const checks = [
+    ["node", ["scripts/check-doc-contract.mjs"]],
     ["node", ["scripts/check-env-contract.mjs"]],
     ["node", ["scripts/check-openapi-access-class.mjs"]],
     ["corepack", ["pnpm", "run", "typecheck"]],
