@@ -1,0 +1,26 @@
+:root {
+  --vmm-color-bg: #f3f6f8;
+  --vmm-color-surface: #ffffff;
+  --vmm-color-ink: #1d2730;
+  --vmm-color-muted: #6d7b88;
+  --vmm-color-line: #dce4ea;
+  --vmm-color-accent: #006f8d;
+  --vmm-color-accent-soft: #d7eff4;
+  --vmm-color-success: #1a8f56;
+  --vmm-color-warning: #d38600;
+  --vmm-color-danger: #c2392d;
+
+  --vmm-radius-sm: 8px;
+  --vmm-radius-md: 12px;
+  --vmm-radius-lg: 14px;
+
+  --vmm-space-1: 4px;
+  --vmm-space-2: 8px;
+  --vmm-space-3: 12px;
+  --vmm-space-4: 16px;
+  --vmm-space-5: 20px;
+  --vmm-space-6: 24px;
+
+  --vmm-shadow-1: 0 8px 24px rgba(16, 33, 44, 0.08);
+  --vmm-shadow-2: 0 16px 40px rgba(16, 33, 44, 0.08);
+}

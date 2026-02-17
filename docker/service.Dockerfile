@@ -10,6 +10,7 @@ COPY packages ./packages
 COPY scripts ./scripts
 COPY db ./db
 COPY config ./config
+COPY assets ./assets
 COPY openapi ./openapi
 
 RUN pnpm install --no-frozen-lockfile

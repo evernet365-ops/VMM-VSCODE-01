@@ -1,0 +1,29 @@
+{
+  "siteId": "site-a",
+  "summary": {
+    "offlineCameras": 3,
+    "aiEvents1h": 11,
+    "notificationSent1h": 27,
+    "notificationFailed1h": 2,
+    "notificationSuccessRate1h": 0.931
+  },
+  "workflow": {
+    "pollSeverity": "suspect",
+    "breakerState": "closed",
+    "nextPollAt": "2026-02-17T12:10:00Z"
+  },
+  "recentIncidents": [
+    {
+      "cameraId": "cam-a-2",
+      "eventType": "offline",
+      "severity": "critical",
+      "score": 0.98
+    },
+    {
+      "cameraId": "cam-a-3",
+      "eventType": "missing_recording",
+      "severity": "suspect",
+      "score": 0.76
+    }
+  ]
+}

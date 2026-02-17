@@ -10,6 +10,7 @@ Enterprise-ready VMM/VMS development skeleton with multi-service architecture, s
 - `SKILLS.md`: team capability matrix and required ownership
 - `MCP.md`: MCP integration and usage conventions
 - `ARCHITECTURE.md`: service boundaries and data flow
+- `UIUX.md`: enterprise UI/UX flow, layout, and interaction standards
 - `CONTRIBUTING.md`: contribution workflow
 - `SECURITY.md`: security baseline and secrets handling
 - `runbook/RUNBOOK.md`: incident runbook and drills
@@ -35,6 +36,7 @@ node scripts/smoke-test.mjs
 
 - `docker-compose.yml`
 - `.env.example`
+- `assets/` (brand, icons, tokens, ui patterns, mock snapshot)
 - `config/gateway/gateway.json.example`
 - `openapi/vmm.yaml`
 - `openapi/notification-gateway.yaml`
@@ -51,6 +53,7 @@ node scripts/smoke-test.mjs
 - reporting-engine: `http://localhost:3014`
 - scheduler: `http://localhost:3015`
 - web-dashboard: `http://localhost:3016`
+  - UI: `http://localhost:3016/app`
 - prometheus: `http://localhost:9090`
 - grafana: `http://localhost:3000`
 
@@ -63,3 +66,11 @@ corepack pnpm run test
 corepack pnpm run lint
 corepack pnpm run smoke
 ```
+
+## Asset Usage
+
+- Static assets are served by `web-dashboard` from `/assets/*`
+- UI page consumes:
+  - `/assets/brand/logo-lockup.svg`
+  - `/assets/tokens/design-tokens.css`
+  - `/assets/ui/pattern-grid.svg`
