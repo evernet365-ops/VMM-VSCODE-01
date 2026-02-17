@@ -13,6 +13,13 @@ paths:
       responses:
         "200":
           description: Service health
+  /metrics:
+    get:
+      summary: Prometheus metrics endpoint
+      x-access-class: Ops
+      responses:
+        "200":
+          description: Metrics payload
   /internal/events:
     post:
       summary: Ingest AI event from worker

@@ -83,6 +83,24 @@ function checkFile(filePath) {
         `(allowed: ${Array.from(allowed).join(", ")})`
       );
     }
+
+    if (op.accessClass === "Internal" && !op.path.startsWith("/internal/")) {
+      errors.push(
+        `${filePath}:${op.line} ${op.method.toUpperCase()} ${op.path} marked Internal but path is not /internal/*`
+      );
+    }
+
+    if (op.accessClass === "External" && !op.path.startsWith("/api/v1/sites/{siteId}/")) {
+      errors.push(
+        `${filePath}:${op.line} ${op.method.toUpperCase()} ${op.path} marked External but path is not /api/v1/sites/{siteId}/*`
+      );
+    }
+
+    if (op.accessClass === "Ops" && op.path !== "/healthz" && op.path !== "/metrics") {
+      errors.push(
+        `${filePath}:${op.line} ${op.method.toUpperCase()} ${op.path} marked Ops but path is not /healthz or /metrics`
+      );
+    }
   }
 
   return { filePath, operations, errors };
