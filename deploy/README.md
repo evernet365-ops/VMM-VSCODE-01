@@ -37,7 +37,23 @@ Later files override earlier values.
    - `corepack pnpm run smoke:connector`
    - `corepack pnpm run smoke:scheduler:ntp`
 
+## Scheduler NTP rollout
+
+1. Edit `deploy/env/scheduler.prod.env`:
+   - `FEATURE_VMM_NTP_TIME_SYNC=true`
+   - `NTP_SERVER_ENABLED=true` (only if LAN devices should sync from this node)
+   - `NTP_UPSTREAM_HOST=time.google.com`
+   - `NTP_UPSTREAM_PORT=123`
+   - `NTP_SYNC_INTERVAL_MIN=1..9999`
+2. Redeploy scheduler and verify:
+   - `http://<scheduler-host>:3015/api/v1/sites/<site-id>/time-sync/status`
+3. Optional manual time mode (temporary):
+   - `POST /api/v1/sites/<site-id>/time-sync/manual` with `{ "isoTime": "2026-01-01T00:00:00.000Z" }`
+4. Return to upstream mode:
+   - `POST /api/v1/sites/<site-id>/time-sync/manual` with `{ "isoTime": null }`
+
 ## Rollback
 
 - Immediate rollback: set feature flags to `false` in `deploy/env/connector-vss.prod.env` and redeploy.
 - Full rollback: remove `deploy/env/connector-vss.prod.env` from `connector-vss.env_file` in `docker-compose.yml` and redeploy.
+- NTP rollback: set `FEATURE_VMM_NTP_TIME_SYNC=false` and `NTP_SERVER_ENABLED=false` in `deploy/env/scheduler.prod.env`, then redeploy scheduler.
