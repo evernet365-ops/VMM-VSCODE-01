@@ -10,6 +10,8 @@
     "typecheck": "corepack pnpm -r --filter @evernet/* run typecheck",
     "lint": "corepack pnpm -r --filter @evernet/* run lint",
     "test": "corepack pnpm -r --filter @evernet/* run test",
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "verify": "node scripts/verify.mjs",
     "migrate": "node scripts/migrate.mjs",
     "seed": "node scripts/seed.mjs",
     "smoke": "node scripts/smoke-test.mjs"

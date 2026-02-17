@@ -26,8 +26,7 @@ Enterprise-ready VMM/VMS development skeleton with multi-service architecture, s
 ## Quick Start
 
 ```bash
-corepack prepare pnpm@10.4.1 --activate
-corepack pnpm install
+node scripts/bootstrap.mjs
 docker compose up -d --build
 node scripts/smoke-test.mjs
 ```
@@ -60,6 +59,8 @@ node scripts/smoke-test.mjs
 ## Local Commands
 
 ```bash
+corepack pnpm run bootstrap
+corepack pnpm run verify
 corepack pnpm run typecheck
 corepack pnpm run build
 corepack pnpm run test
