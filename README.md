@@ -27,7 +27,7 @@ Enterprise-ready VMM/VMS development skeleton with multi-service architecture, s
 
 ```bash
 node scripts/bootstrap.mjs
-docker compose up -d --build
+corepack pnpm run stack:up
 node scripts/smoke-test.mjs
 ```
 
@@ -61,6 +61,9 @@ node scripts/smoke-test.mjs
 ```bash
 corepack pnpm run bootstrap
 corepack pnpm run verify
+corepack pnpm run stack:up
+corepack pnpm run stack:logs
+corepack pnpm run stack:down
 corepack pnpm run typecheck
 corepack pnpm run build
 corepack pnpm run test

@@ -12,6 +12,9 @@
     "test": "corepack pnpm -r --filter @evernet/* run test",
     "bootstrap": "node scripts/bootstrap.mjs",
     "verify": "node scripts/verify.mjs",
+    "stack:up": "node scripts/stack-up.mjs",
+    "stack:down": "node scripts/stack-down.mjs",
+    "stack:logs": "node scripts/stack-logs.mjs",
     "migrate": "node scripts/migrate.mjs",
     "seed": "node scripts/seed.mjs",
     "smoke": "node scripts/smoke-test.mjs"
