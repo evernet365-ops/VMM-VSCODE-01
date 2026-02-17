@@ -18,6 +18,7 @@
     "stack:down": "node scripts/stack-down.mjs",
     "stack:status": "node scripts/stack-status.mjs",
     "stack:logs": "node scripts/stack-logs.mjs",
+    "stack:diag": "node scripts/stack-diag.mjs",
     "stack:smoke": "node scripts/stack-smoke.mjs",
     "drill:webhook": "node scripts/drill-webhook-failure.mjs",
     "drill:db": "node scripts/drill-db-failure.mjs --confirm-stop-db --auto-recover",
