@@ -43,6 +43,7 @@
     "mcp:check": "node scripts/mcp-check.mjs",
     "mcp:update": "corepack pnpm run mcp:generate && corepack pnpm run mcp:check",
     "smoke": "node scripts/smoke-test.mjs",
+    "smoke:connector": "node scripts/connector-vss-smoke.mjs",
     "smoke:vivotek": "node scripts/vivotek-smoke.mjs",
     "smoke:sampo": "node scripts/sampo-smoke.mjs",
     "smoke:sampo:private": "node scripts/sampo-private-smoke.mjs",
