@@ -7,3 +7,12 @@ coverage/
 .DS_Store
 postgres-data/
 grafana-data/
+bin-debug/
+bin-release/
+[Oo]bj/
+[Bb]in/
+.settings/
+*.swf
+*.air
+*.ipa
+*.apk
