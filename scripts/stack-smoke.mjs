@@ -21,6 +21,9 @@ async function main() {
   console.log("==> Stack up");
   await run("corepack", ["pnpm", "run", "stack:up"]);
 
+  console.log("==> Wait for service readiness");
+  await run("corepack", ["pnpm", "run", "stack:wait"]);
+
   console.log("==> Stack status");
   await run("corepack", ["pnpm", "run", "stack:status"]);
 

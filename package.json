@@ -14,6 +14,7 @@
     "doctor": "node scripts/doctor.mjs",
     "verify": "node scripts/verify.mjs",
     "stack:up": "node scripts/stack-up.mjs",
+    "stack:wait": "node scripts/stack-wait.mjs",
     "stack:down": "node scripts/stack-down.mjs",
     "stack:status": "node scripts/stack-status.mjs",
     "stack:logs": "node scripts/stack-logs.mjs",
