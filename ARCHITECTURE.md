@@ -25,6 +25,55 @@
 4. reporting-engine and web-dashboard read site-scoped data from PostgreSQL.
 5. all services expose metrics to Prometheus; Grafana visualizes.
 
+## API Boundaries
+
+### Public vs Internal API
+
+- External operator-facing entrypoint: `web-dashboard` (`/app`, dashboard API reads by site).
+- Internal service-to-service notify entrypoint: `notification-gateway` (`POST /internal/notify`).
+- Internal AI ingest entrypoint: `ai-orchestrator` (`POST /internal/events`).
+- Health and metrics are operational endpoints only (`/healthz`, `/metrics`).
+
+### API Boundary Map
+
+```mermaid
+flowchart LR
+    OPS[Operator Browser]
+    UI[web-dashboard]
+    AIO[ai-orchestrator]
+    NGW[notification-gateway]
+    REP[reporting-engine]
+    SCH[scheduler]
+    CON[connector-vss]
+    AIW[ai-worker]
+    EXT[External channels]
+    DB[(PostgreSQL)]
+
+    OPS -->|HTTP /app| UI
+    UI -->|site-scoped reads| DB
+    CON -->|internal events| AIO
+    AIW -->|POST /internal/events| AIO
+    AIO -->|POST /internal/notify| NGW
+    SCH -->|POST /internal/notify| NGW
+    REP -->|site-scoped reads| DB
+    AIO -->|writes ai_event/artifact| DB
+    NGW -->|writes notification_log| DB
+    NGW -->|webhooks/cards/text| EXT
+```
+
+### Endpoint Matrix
+
+| Service | Endpoint | Access | Purpose |
+| --- | --- | --- | --- |
+| `notification-gateway` | `POST /internal/notify` | Internal | Unified outbound notification pipeline |
+| `ai-orchestrator` | `POST /internal/events` | Internal | Accept worker/connector AI events |
+| `ai-orchestrator` | `GET /api/v1/sites/:siteId/ai-events` | Internal API | Site-scoped event query |
+| `reporting-engine` | `GET /api/v1/sites/:siteId/reports/*` | Internal API | Site-scoped reports/top20 |
+| `web-dashboard` | `GET /app` | External UI | Operations dashboard |
+| `web-dashboard` | `GET /api/v1/sites/:siteId/dashboard/summary` | External API | Site dashboard summary |
+| `*` | `GET /healthz` | Ops | Liveness/readiness check |
+| `*` | `GET /metrics` | Ops | Prometheus scrape endpoint |
+
 ## Database Schema (must include site_id)
 
 - `site(id, name, enabled)`
