@@ -19,6 +19,7 @@ import {
   type CameraHealthState,
   type HealthSample
 } from "./health-monitor.js";
+import { BlackframeCaptureService } from "./blackframe-capture.js";
 import {
   buildPollShardingPlan,
   normalizeShardingConfig
@@ -46,6 +47,18 @@ let consecutiveFailures = 0;
 let loadShedMode = false;
 let nextTimer: NodeJS.Timeout | undefined;
 let lastLoadedCameraIds: string[] = [];
+let lastFrameTsMs: number | undefined;
+const frameIntervalsMs: number[] = [];
+const healthStateSamples: Array<{ ts: number; state: CameraHealthState }> = [];
+let lastHealthTelemetry: { jitterMs?: number; stabilityScore?: number } = {};
+
+const blackframeCapture = new BlackframeCaptureService({
+  enabled: runtime.enableVmsBlackframeCapture ?? false,
+  uploadUrl: runtime.blackframeUploadUrl,
+  uploadToken: runtime.blackframeUploadToken,
+  minIntervalSec: runtime.blackframeCaptureIntervalSec ?? 300,
+  timeoutMs: runtime.apiTimeoutMs
+});
 
 type ProviderProbeItem = {
   name: string;
@@ -487,23 +500,58 @@ async function pollLoop(): Promise<void> {
   }
 
   if (runtime.enableVmsHealthMonitor) {
+    const nowMs = Date.now();
     const healthSample: HealthSample = {
       reconnects: result.success ? Math.floor(Math.random() * 2) : 1,
       fps: result.success ? Math.floor(15 + Math.random() * 10) : 0,
       dropFrames: result.success ? Math.floor(Math.random() * 6) : 12,
-      lastFrameTsMs: result.success ? Date.now() - Math.floor(Math.random() * 2_000) : Date.now() - 60_000,
-      nowMs: Date.now(),
+      lastFrameTsMs: result.success ? nowMs - Math.floor(Math.random() * 2_000) : nowMs - 60_000,
+      nowMs,
       staleTimeoutMs: runtime.apiTimeoutMs * 2,
       offline: !result.success
     };
 
-    const health = evaluateHealth(currentHealthState, healthSample);
+    if (
+      runtime.enableVmsHealthJitter &&
+      healthSample.lastFrameTsMs !== undefined &&
+      healthSample.lastFrameTsMs !== null
+    ) {
+      if (lastFrameTsMs !== undefined) {
+        const interval = Math.max(0, healthSample.lastFrameTsMs - lastFrameTsMs);
+        frameIntervalsMs.push(interval);
+      }
+      lastFrameTsMs = healthSample.lastFrameTsMs;
+      const jitterWindowMs = (runtime.healthJitterWindowSec ?? 300) * 1000;
+      while (frameIntervalsMs.length > 1 && frameIntervalsMs.length * 500 > jitterWindowMs) {
+        frameIntervalsMs.shift();
+      }
+    }
+
+    const stabilityWindowMs = (runtime.healthStabilityWindowMin ?? 60) * 60 * 1000;
+    healthStateSamples.push({ ts: nowMs, state: currentHealthState });
+    while (healthStateSamples.length > 0 && nowMs - healthStateSamples[0].ts > stabilityWindowMs) {
+      healthStateSamples.shift();
+    }
+
+    const health = evaluateHealth(currentHealthState, healthSample, {
+      enableJitter: runtime.enableVmsHealthJitter ?? false,
+      frameIntervalsMs,
+      recentStates: healthStateSamples.map((item) => item.state),
+      stabilityThreshold: 0.9
+    });
     const labels = [runtime.serviceName, siteId] as const;
 
     metrics.cameraReconnects.labels(...labels).set(healthSample.reconnects ?? 0);
     metrics.cameraFps.labels(...labels).set(healthSample.fps ?? 0);
     metrics.cameraDropFrames.labels(...labels).set(healthSample.dropFrames ?? 0);
     metrics.cameraLastFrameTs.labels(...labels).set(healthSample.lastFrameTsMs ?? 0);
+    if (runtime.enableVmsHealthJitter) {
+      const jitterMs = health.jitterMs ?? 0;
+      const stabilityScore = health.stabilityScore ?? 0;
+      lastHealthTelemetry = { jitterMs, stabilityScore };
+      metrics.cameraJitterMs.labels(...labels).set(jitterMs);
+      metrics.cameraStabilityScore.labels(...labels).set(stabilityScore);
+    }
 
     if (health.changed) {
       currentHealthState = health.state;
@@ -513,6 +561,30 @@ async function pollLoop(): Promise<void> {
         queue.shift();
       }
       logger.info("camera health state changed", { state: health.state, reason: health.reason });
+
+      if (runtime.enableVmsBlackframeCapture && health.state === "BLACKFRAME") {
+        const cameraId = `${siteId}-aggregate`;
+        const captureResult = await blackframeCapture.capture({
+          serviceName: runtime.serviceName,
+          siteId,
+          cameraId,
+          nowMs,
+          detail: health.reason
+        });
+        metrics.blackframeCaptureTotal
+          .labels(runtime.serviceName, siteId, cameraId, captureResult.ok ? "success" : "failure")
+          .inc();
+        if (!captureResult.ok) {
+          metrics.blackframeCaptureFailTotal
+            .labels(runtime.serviceName, siteId, cameraId, captureResult.reason)
+            .inc();
+          logger.warn("blackframe capture skipped or failed", {
+            site_id: siteId,
+            camera_id: cameraId,
+            reason: captureResult.reason
+          });
+        }
+      }
     }
   }
 
@@ -566,6 +638,7 @@ app.get("/healthz", async () => {
       rateLimitPerSec: runtime.pollRateLimitPerSec,
       staggerEnabled: runtime.pollStaggerEnabled
     },
+    healthTelemetry: runtime.enableVmsHealthJitter ? lastHealthTelemetry : undefined,
     circuitBreaker: breaker.snapshot()
   };
 });

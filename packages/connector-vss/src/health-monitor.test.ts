@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { evaluateHealth, type CameraHealthState } from "./health-monitor.js";
+import {
+  calculateJitterMs,
+  calculateStabilityScore,
+  evaluateHealth,
+  type CameraHealthState
+} from "./health-monitor.js";
 
 const now = Date.now();
 
@@ -89,5 +94,41 @@ describe("health-monitor", () => {
 
     assert.equal(result.state, "DOWN");
     assert.equal(result.changed, false);
+  });
+
+  it("calculates jitter from frame intervals", () => {
+    const jitter = calculateJitterMs([30, 40, 20, 35]);
+    assert.equal(typeof jitter, "number");
+    assert.equal((jitter ?? 0) > 0, true);
+  });
+
+  it("calculates stability score from recent states", () => {
+    const score = calculateStabilityScore(["OK", "OK", "DEGRADED", "OK"]);
+    assert.equal(score, 0.75);
+  });
+
+  it("degrades by long-term instability when jitter feature is enabled", () => {
+    const result = evaluateHealth(
+      "OK",
+      {
+        reconnects: 0,
+        fps: 24,
+        dropFrames: 0,
+        lastFrameTsMs: now - 500,
+        nowMs: now,
+        staleTimeoutMs: 10_000
+      },
+      {
+        enableJitter: true,
+        frameIntervalsMs: [33, 36, 35, 34],
+        recentStates: ["OK", "DEGRADED", "DOWN", "OK"],
+        stabilityThreshold: 0.9
+      }
+    );
+
+    assert.equal(result.state, "DEGRADED");
+    assert.equal(result.reason, "long-term instability");
+    assert.equal((result.jitterMs ?? 0) > 0, true);
+    assert.equal(result.stabilityScore, 0.5);
   });
 });
