@@ -30,3 +30,15 @@ Required env toggles:
 1. OpenAPI files must be updated for every public API change.
 2. `/healthz` and `/metrics` endpoints are required for each service.
 3. Runbook must include timeout, DB failure, webhook failure, and circuit breaker drills.
+
+## API Boundary Enforcement
+
+1. External UI/API traffic must enter through `web-dashboard` only.
+2. Internal notify path must be `POST /internal/notify` via `notification-gateway`; no direct provider calls from upstream services.
+3. Internal AI ingest path must be `POST /internal/events` via `ai-orchestrator`.
+4. Site-scoped query APIs must require `:siteId` and must filter by `site_id` at query level.
+5. Operational endpoints (`/healthz`, `/metrics`) must not contain business payloads or secret data.
+6. Any new endpoint must declare one access class in docs and OpenAPI:
+   - `External`
+   - `Internal`
+   - `Ops`
