@@ -67,6 +67,12 @@ corepack pnpm run lint
 corepack pnpm run smoke
 ```
 
+## CI
+
+- GitHub Actions workflow: `.github/workflows/ci.yml`
+- Runs on `push`/`pull_request` to `main`
+- Pipeline steps: install -> typecheck -> build -> test -> lint
+
 ## Asset Usage
 
 - Static assets are served by `web-dashboard` from `/assets/*`
