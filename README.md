@@ -2,6 +2,16 @@
 
 Enterprise-ready VMM/VMS development skeleton with multi-service architecture, site isolation, notification gateway, AI orchestration pipeline, and observability stack.
 
+## Recent Updates (2026-02-17)
+
+- Feature rollout framework with percentage sampling (`FEATURE_ROLLOUT_GRADIENT`).
+- Event dedup/suppression guard for health and alert storm control (`FEATURE_VMS_EVENT_DEDUP`).
+- Internal API signature + rate limit guard for `/internal/*` and management paths (`FEATURE_INTERNAL_AUTHZ`).
+- Playback cache/fallback tuning and site-aware weighted sharding metrics.
+- MCP autogen extended with `mcp/prompts.json` and `mcp/ops-diag.json`.
+- New ops scripts: `diag:collect` and `smoke:aggregate`.
+- Web dashboard UX v2 (feature-flagged by `FEATURE_WEB_DASHBOARD_UX_V2`).
+
 ## Documents
 
 - `README.md`: project overview and quick start
@@ -79,6 +89,9 @@ corepack pnpm run drill:db
 corepack pnpm run docs:check
 corepack pnpm run env:check
 corepack pnpm run openapi:check
+corepack pnpm run mcp:update
+corepack pnpm run diag:collect
+corepack pnpm run smoke:aggregate
 corepack pnpm run release:cut -- v0.1.1
 corepack pnpm run typecheck
 corepack pnpm run build
@@ -86,6 +99,13 @@ corepack pnpm run test
 corepack pnpm run lint
 corepack pnpm run smoke
 ```
+
+## Key Feature Flags
+
+- `FEATURE_ROLLOUT_GRADIENT=false`: gradual rollout by scope and percent.
+- `FEATURE_VMS_EVENT_DEDUP=false`: dedup and suppress duplicate health events.
+- `FEATURE_INTERNAL_AUTHZ=false`: enforce internal API signature and rate limit.
+- `FEATURE_WEB_DASHBOARD_UX_V2=false`: enable dashboard UX v2.
 
 ## CI
 
