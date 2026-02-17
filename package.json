@@ -27,6 +27,7 @@
     "release:cut": "node scripts/release-cut.mjs",
     "migrate": "node scripts/migrate.mjs",
     "seed": "node scripts/seed.mjs",
+    "env:check": "node scripts/check-env-contract.mjs",
     "openapi:check": "node scripts/check-openapi-access-class.mjs",
     "smoke": "node scripts/smoke-test.mjs"
   },
