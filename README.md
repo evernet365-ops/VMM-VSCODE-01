@@ -68,6 +68,9 @@ corepack pnpm run stack:status
 corepack pnpm run stack:logs
 corepack pnpm run stack:smoke
 corepack pnpm run stack:down
+corepack pnpm run drill:webhook
+corepack pnpm run drill:circuit
+corepack pnpm run drill:db
 corepack pnpm run typecheck
 corepack pnpm run build
 corepack pnpm run test

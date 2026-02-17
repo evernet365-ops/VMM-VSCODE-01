@@ -31,6 +31,8 @@
 2. Restart notification-gateway.
 3. Send notification request.
 4. Confirm `notification_log` has failed entries and service stays healthy.
+5. Quick drill command:
+   - `corepack pnpm run drill:webhook`
 
 ## 5. Circuit Breaker Drill Script
 
@@ -38,6 +40,8 @@
 2. Observe `connector-vss` health:
    - `curl http://localhost:3013/healthz`
 3. Confirm `state=open` in response and in `circuit_breaker_state` table.
+4. Observation helper:
+   - `corepack pnpm run drill:circuit`
 
 ## 6. Load Shedding Switches
 
@@ -66,3 +70,11 @@ Expected outputs:
 - notification send flow succeeds
 - orchestrator event ingest/query succeeds
 - reporting anomalies endpoint returns data
+
+## 8. DB Failure Drill Command
+
+```bash
+corepack pnpm run drill:db
+```
+
+The command stops postgres, sends a write request to orchestrator, expects 5xx behavior, and auto-recovers postgres.

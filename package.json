@@ -18,6 +18,9 @@
     "stack:status": "node scripts/stack-status.mjs",
     "stack:logs": "node scripts/stack-logs.mjs",
     "stack:smoke": "node scripts/stack-smoke.mjs",
+    "drill:webhook": "node scripts/drill-webhook-failure.mjs",
+    "drill:db": "node scripts/drill-db-failure.mjs --confirm-stop-db --auto-recover",
+    "drill:circuit": "node scripts/drill-circuit-observe.mjs",
     "migrate": "node scripts/migrate.mjs",
     "seed": "node scripts/seed.mjs",
     "smoke": "node scripts/smoke-test.mjs"
