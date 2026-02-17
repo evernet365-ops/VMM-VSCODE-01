@@ -15,6 +15,10 @@ export interface ServiceMetrics {
   cameraFps: Gauge<string>;
   cameraDropFrames: Gauge<string>;
   cameraLastFrameTs: Gauge<string>;
+  cameraJitterMs: Gauge<string>;
+  cameraStabilityScore: Gauge<string>;
+  blackframeCaptureTotal: Counter<string>;
+  blackframeCaptureFailTotal: Counter<string>;
   providerProbeTotal: Counter<string>;
   ntpSyncTotal: Counter<string>;
   ntpOffsetMs: Gauge<string>;
@@ -84,6 +88,34 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     name: "vmm_camera_last_frame_ts_ms",
     help: "Timestamp of last received frame in milliseconds",
     labelNames: labels,
+    registers: [registry]
+  });
+
+  const cameraJitterMs = new Gauge({
+    name: "vmm_camera_jitter_ms",
+    help: "Jitter of frame arrivals in milliseconds (short window)",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const cameraStabilityScore = new Gauge({
+    name: "vmm_camera_stability_score",
+    help: "Stability score over long window (0-1)",
+    labelNames: labels,
+    registers: [registry]
+  });
+
+  const blackframeCaptureTotal = new Counter({
+    name: "vmm_blackframe_capture_total",
+    help: "Total blackframe capture attempts",
+    labelNames: ["service", "site_id", "camera_id", "outcome"],
+    registers: [registry]
+  });
+
+  const blackframeCaptureFailTotal = new Counter({
+    name: "vmm_blackframe_capture_fail_total",
+    help: "Total blackframe capture failures",
+    labelNames: ["service", "site_id", "camera_id", "reason"],
     registers: [registry]
   });
 
@@ -205,6 +237,10 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     cameraFps,
     cameraDropFrames,
     cameraLastFrameTs,
+    cameraJitterMs,
+    cameraStabilityScore,
+    blackframeCaptureTotal,
+    blackframeCaptureFailTotal,
     providerProbeTotal,
     ntpSyncTotal,
     ntpOffsetMs,

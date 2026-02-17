@@ -58,6 +58,11 @@ export interface ServiceRuntimeConfig {
   enableVmsXmCgi?: boolean;
   enableVmsSampoCgi?: boolean;
   enableNtpTimeSync?: boolean;
+  enableVmsHealthJitter?: boolean;
+  enableVmsBlackframeCapture?: boolean;
+  enablePlaybackFallbackTunable?: boolean;
+  enableSiteSharding?: boolean;
+  enableMcpAutogenPrompts?: boolean;
   ntpServerEnabled?: boolean;
   ntpServerHost?: string;
   ntpServerPort?: number;
@@ -66,6 +71,19 @@ export interface ServiceRuntimeConfig {
   ntpSyncIntervalMin?: number;
   ntpRequestTimeoutMs?: number;
   ntpManualTimeIso?: string;
+  healthJitterWindowSec?: number;
+  healthStabilityWindowMin?: number;
+  blackframeCaptureIntervalSec?: number;
+  blackframeUploadUrl?: string;
+  blackframeUploadToken?: string;
+  playbackFallbackWindowSec?: number;
+  playbackFallbackMaxPages?: number;
+  playbackSlowMs?: number;
+  playbackSlowAlertThreshold?: number;
+  siteShardWeights?: string;
+  siteShardBuckets?: number;
+  mcpAutogenEnabled?: boolean;
+  mcpAutogenSources?: string;
   vivotekNvrBaseUrl?: string;
   vivotekIpcamBaseUrl?: string;
   vivotekUsername?: string;
@@ -151,6 +169,11 @@ export function loadServiceRuntimeConfig(serviceName: string, defaultPort: numbe
     enableVmsXmCgi: getBooleanEnv("FEATURE_VMS_XM_CGI", false),
     enableVmsSampoCgi: getBooleanEnv("FEATURE_VMS_SAMPO_CGI", false),
     enableNtpTimeSync: getBooleanEnv("FEATURE_VMM_NTP_TIME_SYNC", false),
+    enableVmsHealthJitter: getBooleanEnv("FEATURE_VMS_HEALTH_JITTER", false),
+    enableVmsBlackframeCapture: getBooleanEnv("FEATURE_VMS_BLACKFRAME_CAPTURE", false),
+    enablePlaybackFallbackTunable: getBooleanEnv("FEATURE_VMM_PLAYBACK_FALLBACK_TUNABLE", false),
+    enableSiteSharding: getBooleanEnv("FEATURE_VMM_SITE_SHARDING", false),
+    enableMcpAutogenPrompts: getBooleanEnv("FEATURE_MCP_AUTOGEN_PROMPTS", false),
     ntpServerEnabled: getBooleanEnv("NTP_SERVER_ENABLED", false),
     ntpServerHost: getOptionalEnv("NTP_SERVER_HOST") ?? "0.0.0.0",
     ntpServerPort: getNumberEnv("NTP_SERVER_PORT", 123),
@@ -159,6 +182,19 @@ export function loadServiceRuntimeConfig(serviceName: string, defaultPort: numbe
     ntpSyncIntervalMin: getNumberEnv("NTP_SYNC_INTERVAL_MIN", 60),
     ntpRequestTimeoutMs: getNumberEnv("NTP_REQUEST_TIMEOUT_MS", 1500),
     ntpManualTimeIso: getOptionalEnv("NTP_MANUAL_TIME_ISO"),
+    healthJitterWindowSec: getNumberEnv("HEALTH_JITTER_WINDOW_SEC", 300),
+    healthStabilityWindowMin: getNumberEnv("HEALTH_STABILITY_WINDOW_MIN", 60),
+    blackframeCaptureIntervalSec: getNumberEnv("BLACKFRAME_CAPTURE_INTERVAL_SEC", 300),
+    blackframeUploadUrl: getOptionalEnv("BLACKFRAME_UPLOAD_URL"),
+    blackframeUploadToken: getOptionalEnv("BLACKFRAME_UPLOAD_TOKEN"),
+    playbackFallbackWindowSec: getNumberEnv("PLAYBACK_FALLBACK_WINDOW_SEC", 3600),
+    playbackFallbackMaxPages: getNumberEnv("PLAYBACK_FALLBACK_MAX_PAGES", 5),
+    playbackSlowMs: getNumberEnv("PLAYBACK_SLOW_MS", 800),
+    playbackSlowAlertThreshold: getNumberEnv("PLAYBACK_SLOW_ALERT_THRESHOLD", 10),
+    siteShardWeights: getOptionalEnv("SITE_SHARD_WEIGHTS"),
+    siteShardBuckets: getNumberEnv("SITE_SHARD_BUCKETS", 60),
+    mcpAutogenEnabled: getBooleanEnv("MCP_AUTOGEN_ENABLED", false),
+    mcpAutogenSources: getOptionalEnv("MCP_AUTOGEN_SOURCES") ?? "services,openapi,runbooks",
     vivotekNvrBaseUrl: getOptionalEnv("VIVOTEK_NVR_BASE_URL"),
     vivotekIpcamBaseUrl: getOptionalEnv("VIVOTEK_IPCAM_BASE_URL"),
     vivotekUsername: getOptionalEnv("VIVOTEK_USERNAME"),
