@@ -11,6 +11,7 @@ import {
   getNumberEnv,
   loadServiceRuntimeConfig,
   mapHealthToSeverity,
+  parseSiteWeights,
   requestWithRetry,
   type Severity
 } from "@evernet/shared";
@@ -51,6 +52,7 @@ let lastFrameTsMs: number | undefined;
 const frameIntervalsMs: number[] = [];
 const healthStateSamples: Array<{ ts: number; state: CameraHealthState }> = [];
 let lastHealthTelemetry: { jitterMs?: number; stabilityScore?: number } = {};
+let lastShardTelemetry: { bucketIndex?: number; activeSiteId?: string; siteSelected?: boolean } = {};
 
 const blackframeCapture = new BlackframeCaptureService({
   enabled: runtime.enableVmsBlackframeCapture ?? false,
@@ -325,7 +327,28 @@ async function probeWithSharding(nowMs: number): Promise<ProbeExecutionResult> {
     rateLimitPerSec: runtime.pollRateLimitPerSec,
     staggerEnabled: runtime.pollStaggerEnabled
   });
-  const plan = buildPollShardingPlan(cameraIds, nowMs, sharding);
+  const siteWeights = parseSiteWeights(runtime.siteShardWeights, [siteId]);
+  const plan = buildPollShardingPlan(cameraIds, nowMs, sharding, {
+    enabled: runtime.enableSiteSharding ?? false,
+    siteId,
+    siteWeights
+  });
+  lastShardTelemetry = {
+    bucketIndex: plan.bucketIndex,
+    activeSiteId: plan.activeSiteId,
+    siteSelected: plan.siteSelected
+  };
+  metrics.pollShardBucketTotal.labels(runtime.serviceName, plan.activeSiteId ?? siteId, String(plan.bucketIndex)).inc();
+
+  if ((runtime.enableSiteSharding ?? false) && !plan.siteSelected) {
+    logger.info("poll sharding site skipped for current bucket", {
+      site_id: siteId,
+      bucketIndex: plan.bucketIndex,
+      activeSiteId: plan.activeSiteId
+    });
+    return { success: true, latencyMs: 0, offlineCameras: 0, detail: "site skipped by shard bucket" };
+  }
+
   const targets = plan.selectedCameraIds.length > 0 ? plan.selectedCameraIds : cameraIds;
 
   const tasks = targets.map(() => () => simulateVssProbe());
@@ -632,11 +655,13 @@ app.get("/healthz", async () => {
     queueSize: queue.length,
     pollingSharding: {
       enabled: runtime.enableVmsPollingSharding ?? false,
+      siteAwareEnabled: runtime.enableSiteSharding ?? false,
       bucketCount: runtime.pollBucketCount,
       maxConcurrency: runtime.pollMaxConcurrency,
       siteConcurrency: runtime.pollSiteConcurrency,
       rateLimitPerSec: runtime.pollRateLimitPerSec,
-      staggerEnabled: runtime.pollStaggerEnabled
+      staggerEnabled: runtime.pollStaggerEnabled,
+      shard: lastShardTelemetry
     },
     healthTelemetry: runtime.enableVmsHealthJitter ? lastHealthTelemetry : undefined,
     circuitBreaker: breaker.snapshot()

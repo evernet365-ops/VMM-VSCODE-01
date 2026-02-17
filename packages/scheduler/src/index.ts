@@ -5,8 +5,11 @@ import {
   getEnv,
   getNumberEnv,
   loadServiceRuntimeConfig,
+  normalizeBucketCount,
+  parseSiteWeights,
   requestWithRetry
 } from "@evernet/shared";
+import { selectSiteForBucket } from "@evernet/shared";
 import { NtpSyncController, clampSyncIntervalMin } from "./ntp-sync.js";
 
 const runtime = loadServiceRuntimeConfig("scheduler", Number(process.env.SCHEDULER_PORT ?? 3015));
@@ -43,7 +46,27 @@ const ntpSync = new NtpSyncController({
 async function runCycle(): Promise<void> {
   const cycleStart = Date.now();
   try {
-    for (const siteId of sites) {
+    let cycleSites = sites;
+    if (runtime.enableSiteSharding) {
+      const bucketCount = normalizeBucketCount(runtime.siteShardBuckets ?? 60, 60);
+      const bucketIndex = Math.floor(Date.now() / 1000) % bucketCount;
+      const normalized = parseSiteWeights(runtime.siteShardWeights, sites)
+        .filter((item) => sites.includes(item.siteId));
+      const activeSiteId = selectSiteForBucket(bucketIndex, normalized);
+      metrics.pollShardBucketTotal.labels(runtime.serviceName, activeSiteId ?? "none", String(bucketIndex)).inc();
+      if (activeSiteId && sites.includes(activeSiteId)) {
+        cycleSites = [activeSiteId];
+      }
+      logger.info("scheduler shard cycle", {
+        tenant_id: siteId,
+        bucketIndex,
+        bucketCount,
+        activeSiteId,
+        cycleSites
+      });
+    }
+
+    for (const siteId of cycleSites) {
       const response = await requestWithRetry(
         `${reportingUrl}/api/v1/sites/${siteId}/reports/anomalies?window=15m`,
         { method: "GET" },

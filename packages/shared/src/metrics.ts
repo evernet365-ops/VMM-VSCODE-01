@@ -32,6 +32,7 @@ export interface ServiceMetrics {
   playbackCacheMissTotal: Counter<string>;
   playbackCacheEvictTotal: Counter<string>;
   playbackCacheTtlExpiredTotal: Counter<string>;
+  pollShardBucketTotal: Counter<string>;
   managementReportRequestsTotal: Counter<string>;
   managementReportSlowQueryTotal: Counter<string>;
   aiEventsTotal: Counter<string>;
@@ -216,6 +217,13 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     registers: [registry]
   });
 
+  const pollShardBucketTotal = new Counter({
+    name: "vmm_poll_shard_bucket_total",
+    help: "Count of poll cycles by shard bucket and site",
+    labelNames: ["service", "site_id", "bucket"],
+    registers: [registry]
+  });
+
   const managementReportRequestsTotal = new Counter({
     name: "vmm_management_report_requests_total",
     help: "Total management report requests",
@@ -294,6 +302,7 @@ export function createServiceMetrics(serviceName: string): ServiceMetrics {
     playbackCacheMissTotal,
     playbackCacheEvictTotal,
     playbackCacheTtlExpiredTotal,
+    pollShardBucketTotal,
     managementReportRequestsTotal,
     managementReportSlowQueryTotal,
     aiEventsTotal,

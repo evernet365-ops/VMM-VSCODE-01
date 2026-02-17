@@ -1,3 +1,8 @@
+import {
+  selectSiteForBucket,
+  type SiteWeight
+} from "@evernet/shared";
+
 export interface PollShardingConfig {
   bucketCount: number;
   maxConcurrency: number;
@@ -6,11 +11,19 @@ export interface PollShardingConfig {
   staggerEnabled: boolean;
 }
 
+export interface SiteAwareShardingConfig {
+  enabled: boolean;
+  siteId: string;
+  siteWeights: SiteWeight[];
+}
+
 export interface PollShardingPlan {
   bucketIndex: number;
   selectedCameraIds: string[];
   effectiveConcurrency: number;
   minLaunchGapMs: number;
+  siteSelected: boolean;
+  activeSiteId?: string;
 }
 
 function sanitizePositiveInt(value: number, fallback: number): number {
@@ -41,11 +54,18 @@ export function hashCameraId(cameraId: string): number {
 export function buildPollShardingPlan(
   cameraIds: string[],
   nowMs: number,
-  config: PollShardingConfig
+  config: PollShardingConfig,
+  siteAware?: SiteAwareShardingConfig
 ): PollShardingPlan {
   const normalized = normalizeShardingConfig(config);
   const bucketIndex = Math.floor(nowMs / 1000) % normalized.bucketCount;
-  const selectedCameraIds = cameraIds.filter((cameraId) => (hashCameraId(cameraId) % normalized.bucketCount) === bucketIndex);
+  const activeSiteId = siteAware?.enabled
+    ? selectSiteForBucket(bucketIndex, siteAware.siteWeights)
+    : undefined;
+  const siteSelected = !siteAware?.enabled || !activeSiteId || activeSiteId === siteAware.siteId;
+  const selectedCameraIds = siteSelected
+    ? cameraIds.filter((cameraId) => (hashCameraId(cameraId) % normalized.bucketCount) === bucketIndex)
+    : [];
   const effectiveConcurrency = Math.min(normalized.maxConcurrency, normalized.siteConcurrency);
   const minLaunchGapMs = Math.max(1, Math.floor(1000 / normalized.rateLimitPerSec));
 
@@ -53,6 +73,8 @@ export function buildPollShardingPlan(
     bucketIndex,
     selectedCameraIds,
     effectiveConcurrency,
-    minLaunchGapMs
+    minLaunchGapMs,
+    siteSelected,
+    activeSiteId
   };
 }
