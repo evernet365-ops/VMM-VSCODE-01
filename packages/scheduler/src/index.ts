@@ -148,6 +148,42 @@ app.post("/api/v1/time-sync/manual", async (request, reply) => {
   };
 });
 
+app.get("/api/v1/sites/:siteId/time-sync/status", async () => {
+  return {
+    status: "ok",
+    service: runtime.serviceName,
+    now: ntpSync.getCurrentTimeIso(),
+    ntp: ntpSync.getStatus()
+  };
+});
+
+app.post("/api/v1/sites/:siteId/time-sync/manual", async (request, reply) => {
+  const params = request.params as { siteId?: string };
+  const requestSiteId = params.siteId ?? siteId;
+  const body = (request.body ?? {}) as { isoTime?: string | null };
+  const isoTime = body.isoTime ?? undefined;
+
+  const result = ntpSync.setManualTime(isoTime ?? undefined);
+  if (!result.accepted) {
+    reply.status(400);
+    return {
+      status: "invalid",
+      reason: result.reason ?? "unknown"
+    };
+  }
+
+  logger.info("ntp manual time updated", {
+    tenant_id: requestSiteId,
+    mode: isoTime ? "manual" : "upstream"
+  });
+
+  return {
+    status: "ok",
+    now: ntpSync.getCurrentTimeIso(),
+    ntp: ntpSync.getStatus()
+  };
+});
+
 app.post("/internal/run-cycle", async () => {
   await runCycle();
   return { status: "ok", lastRun };

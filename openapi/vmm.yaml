@@ -144,6 +144,40 @@ paths:
       responses:
         "200":
           description: Dashboard summary
+  /api/v1/sites/{siteId}/time-sync/status:
+    get:
+      summary: Time sync status and effective current time
+      x-access-class: External
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+      responses:
+        "200":
+          description: Time sync status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeSyncStatusResponse"
+  /api/v1/sites/{siteId}/time-sync/manual:
+    post:
+      summary: Set or clear manual time mode
+      x-access-class: External
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TimeSyncManualRequest"
+      responses:
+        "200":
+          description: Manual time accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeSyncStatusResponse"
+        "400":
+          description: Invalid request payload
 components:
   parameters:
     SiteId:
@@ -185,3 +219,85 @@ components:
         metadata:
           type: object
           additionalProperties: true
+    TimeSyncManualRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        isoTime:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+    TimeSyncStatusResponse:
+      type: object
+      required: [status, service, now, ntp]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+        now:
+          type: string
+          format: date-time
+        ntp:
+          $ref: "#/components/schemas/NtpStatus"
+    NtpStatus:
+      type: object
+      required:
+        - enabled
+        - mode
+        - siteId
+        - upstreamHost
+        - upstreamPort
+        - syncIntervalMin
+        - requestTimeoutMs
+        - serverEnabled
+        - serverHost
+        - serverPort
+        - serverBound
+        - offsetMs
+      properties:
+        enabled:
+          type: boolean
+        mode:
+          type: string
+          enum: [disabled, system, manual, upstream]
+        siteId:
+          type: string
+        upstreamHost:
+          type: string
+        upstreamPort:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        syncIntervalMin:
+          type: integer
+          minimum: 1
+          maximum: 9999
+        requestTimeoutMs:
+          type: integer
+          minimum: 100
+        serverEnabled:
+          type: boolean
+        serverHost:
+          type: string
+        serverPort:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        serverBound:
+          type: boolean
+        offsetMs:
+          type: integer
+        manualTimeIso:
+          type: string
+          format: date-time
+        lastSyncAt:
+          type: string
+          format: date-time
+        lastSuccessAt:
+          type: string
+          format: date-time
+        lastError:
+          type: string

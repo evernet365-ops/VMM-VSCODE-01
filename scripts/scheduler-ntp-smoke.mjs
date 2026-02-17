@@ -5,6 +5,7 @@ scheduler ntp smoke checker
 
 Optional env:
   SMOKE_SCHEDULER_URL (default: http://localhost:3015)
+  SMOKE_SITE_ID (default: site-a)
   SMOKE_TIMEOUT_MS (default: 5000)
   SMOKE_NTP_MANUAL_TIME_ISO (default: 2026-01-01T00:00:00.000Z)
 `;
@@ -30,8 +31,8 @@ async function assertHealth(baseUrl, timeoutMs) {
   }
 }
 
-async function assertStatus(baseUrl, timeoutMs) {
-  const response = await fetchWithTimeout(`${baseUrl}/api/v1/time-sync/status`, { method: "GET" }, timeoutMs);
+async function assertStatus(baseUrl, siteId, timeoutMs) {
+  const response = await fetchWithTimeout(`${baseUrl}/api/v1/sites/${encodeURIComponent(siteId)}/time-sync/status`, { method: "GET" }, timeoutMs);
   if (!response.ok) {
     throw new Error(`time-sync status failed with status=${response.status}`);
   }
@@ -42,9 +43,9 @@ async function assertStatus(baseUrl, timeoutMs) {
   }
 }
 
-async function setManual(baseUrl, isoTime, timeoutMs) {
+async function setManual(baseUrl, siteId, isoTime, timeoutMs) {
   const response = await fetchWithTimeout(
-    `${baseUrl}/api/v1/time-sync/manual`,
+    `${baseUrl}/api/v1/sites/${encodeURIComponent(siteId)}/time-sync/manual`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -59,9 +60,9 @@ async function setManual(baseUrl, isoTime, timeoutMs) {
   }
 }
 
-async function clearManual(baseUrl, timeoutMs) {
+async function clearManual(baseUrl, siteId, timeoutMs) {
   const response = await fetchWithTimeout(
-    `${baseUrl}/api/v1/time-sync/manual`,
+    `${baseUrl}/api/v1/sites/${encodeURIComponent(siteId)}/time-sync/manual`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -83,19 +84,20 @@ async function main() {
   }
 
   const baseUrl = trimTrailingSlash(process.env.SMOKE_SCHEDULER_URL ?? "http://localhost:3015");
+  const siteId = process.env.SMOKE_SITE_ID ?? "site-a";
   const timeoutMs = Number(process.env.SMOKE_TIMEOUT_MS ?? "5000");
   const manualTimeIso = process.env.SMOKE_NTP_MANUAL_TIME_ISO ?? "2026-01-01T00:00:00.000Z";
 
   await assertHealth(baseUrl, timeoutMs);
   console.log(`[scheduler] healthz ok: ${baseUrl}/healthz`);
 
-  await assertStatus(baseUrl, timeoutMs);
-  console.log(`[scheduler] time-sync status ok: ${baseUrl}/api/v1/time-sync/status`);
+  await assertStatus(baseUrl, siteId, timeoutMs);
+  console.log(`[scheduler] time-sync status ok: ${baseUrl}/api/v1/sites/${siteId}/time-sync/status`);
 
-  await setManual(baseUrl, manualTimeIso, timeoutMs);
+  await setManual(baseUrl, siteId, manualTimeIso, timeoutMs);
   console.log(`[scheduler] manual time set ok: ${manualTimeIso}`);
 
-  await clearManual(baseUrl, timeoutMs);
+  await clearManual(baseUrl, siteId, timeoutMs);
   console.log("[scheduler] manual time cleared ok");
 
   console.log("scheduler ntp smoke passed.");
