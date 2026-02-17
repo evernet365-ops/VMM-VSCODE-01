@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: EverNet VMM Dashboards
+    orgId: 1
+    folder: EverNet VMM
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 15
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

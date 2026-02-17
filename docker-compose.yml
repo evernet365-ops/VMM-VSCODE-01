@@ -1,0 +1,263 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evernet
+      POSTGRES_PASSWORD: evernet
+      POSTGRES_DB: evernet_vmm
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evernet -d evernet_vmm"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - vmm-net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - vmm-net
+
+  db-migrate:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["sh", "-c", "node scripts/migrate.mjs && node scripts/seed.mjs"]
+    env_file:
+      - .env.example
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - vmm-net
+
+  notification-gateway:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["pnpm", "--filter", "@evernet/notification-gateway", "start"]
+    env_file:
+      - .env.example
+    environment:
+      PORT: ${NOTIFICATION_GATEWAY_PORT:-3010}
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "3010:3010"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3010/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - vmm-net
+
+  ai-orchestrator:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["pnpm", "--filter", "@evernet/ai-orchestrator", "start"]
+    env_file:
+      - .env.example
+    environment:
+      PORT: ${AI_ORCHESTRATOR_PORT:-3011}
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      notification-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "3011:3011"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3011/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - vmm-net
+
+  ai-worker:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["pnpm", "--filter", "@evernet/ai-worker", "start"]
+    env_file:
+      - .env.example
+    environment:
+      PORT: ${AI_WORKER_PORT:-3012}
+    depends_on:
+      ai-orchestrator:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "3012:3012"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3012/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - vmm-net
+
+  connector-vss:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["pnpm", "--filter", "@evernet/connector-vss", "start"]
+    env_file:
+      - .env.example
+    environment:
+      PORT: ${CONNECTOR_VSS_PORT:-3013}
+    depends_on:
+      notification-gateway:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    ports:
+      - "3013:3013"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3013/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - vmm-net
+
+  reporting-engine:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["pnpm", "--filter", "@evernet/reporting-engine", "start"]
+    env_file:
+      - .env.example
+    environment:
+      PORT: ${REPORTING_ENGINE_PORT:-3014}
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    ports:
+      - "3014:3014"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3014/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - vmm-net
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["pnpm", "--filter", "@evernet/scheduler", "start"]
+    env_file:
+      - .env.example
+    environment:
+      PORT: ${SCHEDULER_PORT:-3015}
+    depends_on:
+      reporting-engine:
+        condition: service_healthy
+      notification-gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "3015:3015"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3015/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - vmm-net
+
+  web-dashboard:
+    build:
+      context: .
+      dockerfile: docker/service.Dockerfile
+    command: ["pnpm", "--filter", "@evernet/web-dashboard", "start"]
+    env_file:
+      - .env.example
+    environment:
+      PORT: ${WEB_DASHBOARD_PORT:-3016}
+    depends_on:
+      reporting-engine:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    ports:
+      - "3016:3016"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3016/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - vmm-net
+
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - notification-gateway
+      - ai-orchestrator
+      - ai-worker
+      - connector-vss
+      - reporting-engine
+      - scheduler
+      - web-dashboard
+    networks:
+      - vmm-net
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards/json:ro
+    depends_on:
+      - prometheus
+    networks:
+      - vmm-net
+
+volumes:
+  postgres-data:
+  grafana-data:
+
+networks:
+  vmm-net:
+    driver: bridge

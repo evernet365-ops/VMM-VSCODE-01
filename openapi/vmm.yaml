@@ -1,0 +1,141 @@
+openapi: 3.1.0
+info:
+  title: EverNet VMM API
+  version: 1.0.0
+  description: Core VMM APIs for orchestrator, reporting, scheduler and dashboard.
+servers:
+  - url: http://localhost:3011
+paths:
+  /healthz:
+    get:
+      summary: Generic health check endpoint
+      responses:
+        "200":
+          description: Service health
+  /internal/events:
+    post:
+      summary: Ingest AI event from worker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiEvent"
+      responses:
+        "200":
+          description: Accepted
+  /api/v1/sites/{siteId}/ai-events:
+    get:
+      summary: Query AI events by site
+      parameters:
+        - in: path
+          name: siteId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        "200":
+          description: Site scoped AI events
+  /api/v1/sites/{siteId}/poll-state:
+    get:
+      summary: Query connector poll state by site
+      parameters:
+        - in: path
+          name: siteId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Poll states
+  /api/v1/sites/{siteId}/reports/anomalies:
+    get:
+      summary: Query anomalies by window
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - $ref: "#/components/parameters/Window"
+      responses:
+        "200":
+          description: Anomaly list
+  /api/v1/sites/{siteId}/reports/top-offline:
+    get:
+      summary: Top 20 offline cameras
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - $ref: "#/components/parameters/Window"
+      responses:
+        "200":
+          description: Ranked cameras by offline count
+  /api/v1/sites/{siteId}/reports/top-missing-recording:
+    get:
+      summary: Top 20 missing recording cameras
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - $ref: "#/components/parameters/Window"
+      responses:
+        "200":
+          description: Ranked cameras by missing recording count
+  /api/v1/sites/{siteId}/reports/accumulated-offline:
+    get:
+      summary: Rank by accumulated offline duration
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+        - $ref: "#/components/parameters/Window"
+      responses:
+        "200":
+          description: Ranked accumulated offline duration
+  /api/v1/sites/{siteId}/dashboard/summary:
+    get:
+      summary: Site dashboard summary
+      parameters:
+        - $ref: "#/components/parameters/SiteId"
+      responses:
+        "200":
+          description: Dashboard summary
+components:
+  parameters:
+    SiteId:
+      in: path
+      name: siteId
+      required: true
+      schema:
+        type: string
+    Window:
+      in: query
+      name: window
+      required: false
+      schema:
+        type: string
+        enum: [15m, 1h, 4h, 8h, 24h]
+  schemas:
+    AiEvent:
+      type: object
+      required: [siteId, cameraId, eventType, severity, score, tsEvent, dedupKey]
+      properties:
+        siteId:
+          type: string
+        cameraId:
+          type: string
+        eventType:
+          type: string
+        severity:
+          type: string
+          enum: [normal, suspect, critical]
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        tsEvent:
+          type: string
+          format: date-time
+        dedupKey:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true

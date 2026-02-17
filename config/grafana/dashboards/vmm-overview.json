@@ -1,0 +1,72 @@
+{
+  "id": null,
+  "uid": "evernet-vmm-overview",
+  "title": "EverNet VMM Overview",
+  "tags": ["evernet", "vmm"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Site 異常數",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(vmm_camera_offline_total[5m])) by (site_id)", "legendFormat": "{{site_id}}" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "系統負載",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(process_cpu_seconds_total[5m])) by (instance)", "legendFormat": "{{instance}}" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "通知成功率",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(vmm_notification_sent_total[5m])) / clamp_min(sum(rate(vmm_notification_sent_total[5m]) + rate(vmm_notification_failed_total[5m])), 1)",
+          "legendFormat": "success_rate"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "AI 事件量",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "targets": [
+        { "expr": "sum(rate(vmm_ai_events_total[5m])) by (site_id)", "legendFormat": "{{site_id}}" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "DB 連線數",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "targets": [
+        { "expr": "vmm_db_connections", "legendFormat": "{{service}}" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "API latency",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(vmm_api_latency_ms_bucket[5m])) by (le, route))",
+          "legendFormat": "p95 {{route}}"
+        }
+      ]
+    }
+  ]
+}

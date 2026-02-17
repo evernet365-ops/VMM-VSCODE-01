@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: EverNet Notification Gateway API
+  version: 1.0.0
+  description: Internal notification gateway API for all upstream services.
+servers:
+  - url: http://localhost:3010
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service health
+  /internal/notify:
+    post:
+      summary: Send internal notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotifyRequest"
+      responses:
+        "200":
+          description: Notification accepted
+        "400":
+          description: Validation error
+        "403":
+          description: Site disabled
+        "429":
+          description: Site rate limited
+components:
+  schemas:
+    NotifyRequest:
+      type: object
+      required: [siteId, severity, title, message]
+      properties:
+        siteId:
+          type: string
+        severity:
+          type: string
+          enum: [normal, suspect, critical]
+        title:
+          type: string
+        message:
+          type: string
+        channels:
+          type: array
+          items:
+            type: string
+        card:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [summary, top20, links]
+            title:
+              type: string
+            body:
+              type: string
+            links:
+              type: array
+              items:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  url:
+                    type: string
+                    format: uri

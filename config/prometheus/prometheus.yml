@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: notification-gateway
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["notification-gateway:3010"]
+
+  - job_name: ai-orchestrator
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ai-orchestrator:3011"]
+
+  - job_name: ai-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["ai-worker:3012"]
+
+  - job_name: connector-vss
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["connector-vss:3013"]
+
+  - job_name: reporting-engine
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["reporting-engine:3014"]
+
+  - job_name: scheduler
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["scheduler:3015"]
+
+  - job_name: web-dashboard
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["web-dashboard:3016"]

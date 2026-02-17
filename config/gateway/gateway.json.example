@@ -1,0 +1,36 @@
+{
+  "sites": {
+    "site-a": {
+      "enabled": true,
+      "channels": ["gchat", "email"],
+      "rateLimitPerSitePerMin": 120,
+      "gchat": {
+        "mode": "cards",
+        "buttonsPerCard": 6
+      },
+      "routes": {
+        "gchat": "mock://gchat/site-a",
+        "email": "mock://email/site-a",
+        "sms": "mock://sms/site-a",
+        "teams": "mock://teams/site-a",
+        "line": "mock://line/site-a"
+      }
+    },
+    "site-b": {
+      "enabled": true,
+      "channels": ["gchat"],
+      "rateLimitPerSitePerMin": 60,
+      "gchat": {
+        "mode": "text",
+        "buttonsPerCard": 6
+      },
+      "routes": {
+        "gchat": "mock://gchat/site-b",
+        "email": "mock://email/site-b",
+        "sms": "mock://sms/site-b",
+        "teams": "mock://teams/site-b",
+        "line": "mock://line/site-b"
+      }
+    }
+  }
+}

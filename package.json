@@ -1,0 +1,23 @@
+{
+  "name": "evernet-vmm",
+  "private": true,
+  "version": "0.1.0",
+  "description": "EverNet VMM full-stack development environment and service skeleton",
+  "packageManager": "pnpm@10.4.1",
+  "scripts": {
+    "dev": "corepack pnpm -r --parallel --filter @evernet/* run dev",
+    "build": "corepack pnpm -r --filter @evernet/* run build",
+    "typecheck": "corepack pnpm -r --filter @evernet/* run typecheck",
+    "lint": "corepack pnpm -r --filter @evernet/* run lint",
+    "test": "corepack pnpm -r --filter @evernet/* run test",
+    "migrate": "node scripts/migrate.mjs",
+    "seed": "node scripts/seed.mjs",
+    "smoke": "node scripts/smoke-test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
