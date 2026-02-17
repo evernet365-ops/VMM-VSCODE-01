@@ -13,8 +13,8 @@ importers:
         version: 8.18.0
     devDependencies:
       '@types/node':
-        specifier: ^24.0.0
-        version: 24.10.13
+        specifier: ^25.2.3
+        version: 25.2.3
       '@types/pg':
         specifier: ^8.15.5
         version: 8.16.0
@@ -283,8 +283,8 @@ packages:
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
 
-  '@types/node@24.10.13':
-    resolution: {integrity: sha512-oH72nZRfDv9lADUBSo104Aq7gPHpQZc4BTx38r9xf9pg5LfP6EzSyH2n7qFmmxRQXh7YlUXODcYsg6PuTDSxGg==}
+  '@types/node@25.2.3':
+    resolution: {integrity: sha512-m0jEgYlYz+mDJZ2+F4v8D1AyQb+QzsNqRuI7xg1VQX/KlKS0qT9r1Mo16yo5F/MtifXFgaofIFsdFMox2SxIbQ==}
 
   '@types/pg@8.16.0':
     resolution: {integrity: sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==}
@@ -635,13 +635,13 @@ snapshots:
 
   '@pinojs/redact@0.4.0': {}
 
-  '@types/node@24.10.13':
+  '@types/node@25.2.3':
     dependencies:
       undici-types: 7.16.0
 
   '@types/pg@8.16.0':
     dependencies:
-      '@types/node': 24.10.13
+      '@types/node': 25.2.3
       pg-protocol: 1.11.0
       pg-types: 2.2.0
 
