@@ -16,3 +16,5 @@ bin-release/
 *.air
 *.ipa
 *.apk
+artifacts/
+*.log

@@ -68,6 +68,7 @@ corepack pnpm run stack:wait
 corepack pnpm run stack:status
 corepack pnpm run stack:logs
 corepack pnpm run stack:diag
+corepack pnpm run stack:clean
 corepack pnpm run stack:smoke
 corepack pnpm run stack:down
 corepack pnpm run drill:webhook
