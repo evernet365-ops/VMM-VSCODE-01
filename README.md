@@ -85,6 +85,13 @@ corepack pnpm run smoke
 - Issue templates: `.github/ISSUE_TEMPLATE/*`
 - Code ownership rules: `.github/CODEOWNERS`
 
+## Security Automation
+
+- Code scanning workflow: `.github/workflows/codeql.yml`
+  - runs on push/PR to `main` and weekly schedule
+- Dependency update bot: `.github/dependabot.yml`
+  - weekly npm and GitHub Actions update PRs
+
 ## Asset Usage
 
 - Static assets are served by `web-dashboard` from `/assets/*`
