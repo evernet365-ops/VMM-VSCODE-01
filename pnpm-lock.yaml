@@ -31,8 +31,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       fastify:
-        specifier: ^5.0.0
-        version: 5.7.4
+        specifier: ^5.8.4
+        version: 5.8.4
 
   packages/ai-worker:
     dependencies:
@@ -40,8 +40,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       fastify:
-        specifier: ^5.0.0
-        version: 5.7.4
+        specifier: ^5.8.4
+        version: 5.8.4
 
   packages/connector-vss:
     dependencies:
@@ -49,8 +49,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       fastify:
-        specifier: ^5.0.0
-        version: 5.7.4
+        specifier: ^5.8.4
+        version: 5.8.4
 
   packages/notification-gateway:
     dependencies:
@@ -58,8 +58,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       fastify:
-        specifier: ^5.0.0
-        version: 5.7.4
+        specifier: ^5.8.4
+        version: 5.8.4
 
   packages/reporting-engine:
     dependencies:
@@ -67,8 +67,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       fastify:
-        specifier: ^5.0.0
-        version: 5.7.4
+        specifier: ^5.8.4
+        version: 5.8.4
 
   packages/scheduler:
     dependencies:
@@ -76,8 +76,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       fastify:
-        specifier: ^5.0.0
-        version: 5.7.4
+        specifier: ^5.8.4
+        version: 5.8.4
 
   packages/shared:
     dependencies:
@@ -97,8 +97,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       fastify:
-        specifier: ^5.0.0
-        version: 5.7.4
+        specifier: ^5.8.4
+        version: 5.8.4
 
 packages:
 
@@ -345,14 +345,14 @@ packages:
   fast-uri@3.1.0:
     resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
 
-  fastify@5.7.4:
-    resolution: {integrity: sha512-e6l5NsRdaEP8rdD8VR0ErJASeyaRbzXYpmkrpr2SuvuMq6Si3lvsaVy5C+7gLanEkvjpMDzBXWE5HPeb/hgTxA==}
+  fastify@5.8.4:
+    resolution: {integrity: sha512-sa42J1xylbBAYUWALSBoyXKPDUvM3OoNOibIefA+Oha57FryXKKCZarA1iDntOCWp3O35voZLuDg2mdODXtPzQ==}
 
   fastq@1.20.1:
     resolution: {integrity: sha512-GGToxJ/w1x32s/D2EKND7kTil4n8OVk/9mycTc4VDza13lOvpUZTGX3mFSCtV9ksdGBVzvsyAVLM6mHFThxXxw==}
 
-  find-my-way@9.4.0:
-    resolution: {integrity: sha512-5Ye4vHsypZRYtS01ob/iwHzGRUDELlsoCftI/OZFhcLs1M0tkGPcXldE80TAZC5yYuJMBPJQQ43UHlqbJWiX2w==}
+  find-my-way@9.5.0:
+    resolution: {integrity: sha512-VW2RfnmscZO5KgBY5XVyKREMW5nMZcxDy+buTOsL+zIPnBlbKm+00sgzoQzq1EVh4aALZLfKdwv6atBGcjvjrQ==}
     engines: {node: '>=20'}
 
   fsevents@2.3.3:
@@ -475,8 +475,9 @@ packages:
   rfdc@1.4.1:
     resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
 
-  safe-regex2@5.0.0:
-    resolution: {integrity: sha512-YwJwe5a51WlK7KbOJREPdjNrpViQBI3p4T50lfwPuDhZnE3XGVTlGvi+aolc5+RvxDD6bnUmjVsU9n1eboLUYw==}
+  safe-regex2@5.1.0:
+    resolution: {integrity: sha512-pNHAuBW7TrcleFHsxBr5QMi/Iyp0ENjUKz7GCcX1UO7cMh+NmVK6HxQckNL1tJp1XAJVjG6B8OKIPqodqj9rtw==}
+    hasBin: true
 
   safe-stable-stringify@2.5.0:
     resolution: {integrity: sha512-b3rppTKm9T+PsVCBEOUR46GWI7fdOs00VKZ1+9c1EWDaDMvjQc6tUwuFyIprgGgTcWoVHSKrU8H31ZHA2e0RHA==}
@@ -721,7 +722,7 @@ snapshots:
 
   fast-uri@3.1.0: {}
 
-  fastify@5.7.4:
+  fastify@5.8.4:
     dependencies:
       '@fastify/ajv-compiler': 4.0.5
       '@fastify/error': 4.2.0
@@ -730,7 +731,7 @@ snapshots:
       abstract-logging: 2.0.1
       avvio: 9.2.0
       fast-json-stringify: 6.3.0
-      find-my-way: 9.4.0
+      find-my-way: 9.5.0
       light-my-request: 6.6.0
       pino: 10.3.1
       process-warning: 5.0.0
@@ -743,11 +744,11 @@ snapshots:
     dependencies:
       reusify: 1.1.0
 
-  find-my-way@9.4.0:
+  find-my-way@9.5.0:
     dependencies:
       fast-deep-equal: 3.1.3
       fast-querystring: 1.1.2
-      safe-regex2: 5.0.0
+      safe-regex2: 5.1.0
 
   fsevents@2.3.3:
     optional: true
@@ -860,7 +861,7 @@ snapshots:
 
   rfdc@1.4.1: {}
 
-  safe-regex2@5.0.0:
+  safe-regex2@5.1.0:
     dependencies:
       ret: 0.5.0
 
